@@ -83,7 +83,7 @@ public class Servlet3Advice {
     contextToUpdate =
         helper().updateContext(contextToUpdate, httpServletRequest, mappingResolver, servlet);
     scope = contextToUpdate.makeCurrent();
-
+    System.out.println("Servlet3 enter:" + context.toString());
     if (context != null) {
       // Only trigger response customizer once, so only if server span was created here
       HttpServerResponseCustomizerHolder.getCustomizer()
@@ -105,6 +105,7 @@ public class Servlet3Advice {
       return;
     }
 
+    System.out.println("Servlet3 exit:" + requestContext.toString());
     boolean topLevel = callDepth.decrementAndGet() == 0;
     helper()
         .end(

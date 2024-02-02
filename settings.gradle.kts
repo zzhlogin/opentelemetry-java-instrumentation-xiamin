@@ -565,6 +565,8 @@ include(":instrumentation:vibur-dbcp-11.0:library")
 include(":instrumentation:vibur-dbcp-11.0:testing")
 include(":instrumentation:wicket-8.0:javaagent")
 include(":instrumentation:zio:zio-2.0:javaagent")
+// amazon internal auto-intrumentation
+include(":instrumentation:amazon-coral:coral-1.1:javaagent")
 
 // benchmark
 include(":benchmark-overhead-jmh")

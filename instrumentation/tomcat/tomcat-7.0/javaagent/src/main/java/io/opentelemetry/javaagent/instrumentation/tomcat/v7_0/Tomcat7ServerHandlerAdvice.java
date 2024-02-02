@@ -26,6 +26,7 @@ public class Tomcat7ServerHandlerAdvice {
       @Advice.Local("otelScope") Scope scope) {
 
     Context parentContext = Java8BytecodeBridge.currentContext();
+    System.out.println("Tomcat7ServerHandlerAdvice onEnter method Start1: " + parentContext.toString());
     if (!helper().shouldStart(parentContext, request)) {
       return;
     }
@@ -36,6 +37,7 @@ public class Tomcat7ServerHandlerAdvice {
 
     HttpServerResponseCustomizerHolder.getCustomizer()
         .customize(context, response, Tomcat7ResponseMutator.INSTANCE);
+    System.out.println("Tomcat7ServerHandlerAdvice onEnter method End: " + context.toString());
   }
 
   @Advice.OnMethodExit(onThrowable = Throwable.class, suppress = Throwable.class)
@@ -45,7 +47,9 @@ public class Tomcat7ServerHandlerAdvice {
       @Advice.Thrown Throwable throwable,
       @Advice.Local("otelContext") Context context,
       @Advice.Local("otelScope") Scope scope) {
-
-    helper().end(request, response, throwable, context, scope);
+    System.out.println("Tomcat7ServerHandlerAdvice stopSpan method Start: " + context.toString());
+    System.out.println("Tomcat7ServerHandlerAdvice stopSpan method Start scope: " + scope.toString());
+//    helper().end(request, response, throwable, context, scope);
+    System.out.println("Tomcat7ServerHandlerAdvice stopSpan method End: " + context.toString());
   }
 }
