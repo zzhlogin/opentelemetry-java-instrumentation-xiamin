@@ -9,7 +9,6 @@ import com.amazon.coral.service.HttpConstant;
 import com.amazon.coral.service.Job;
 import com.amazon.coral.service.ServiceConstant;
 import io.opentelemetry.instrumentation.api.incubator.semconv.code.CodeAttributesGetter;
-import io.opentelemetry.instrumentation.api.semconv.http.HttpServerAttributesGetter;
 
 public class CoralAttributesGetter implements AttributesGetter<Job>, CodeAttributesGetter<Job> {
 

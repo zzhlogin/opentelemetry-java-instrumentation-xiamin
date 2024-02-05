@@ -101,7 +101,6 @@ public class CoralServerInstrumentation implements TypeInstrumentation {
         return;
       }
       Context parentContext = Java8BytecodeBridge.currentContext();
-//      System.out.println("coral enter After method11: " + parentContext.toString());
       scope = parentContext.makeCurrent();
       if (scope == null) {
         System.out.println("coral enter After method end : scope is null");
@@ -109,10 +108,13 @@ public class CoralServerInstrumentation implements TypeInstrumentation {
       }
       Span span = Span.fromContext(parentContext);
       try {
+        scope.close();
         instrumenter().end(parentContext, job, job, job.getFailure());
       } catch (Throwable e) {
         System.out.println("End span in error: " + e.getMessage());
       }
+      System.out.println("coral trace id: " + span.getSpanContext().getTraceId());
+      job.getMetrics().addProperty("AwsXRayTraceId", span.getSpanContext().getTraceId());
       System.out.println("coral enter After method end");
     }
   }
