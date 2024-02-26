@@ -16,10 +16,14 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.MessageHeaders;
 import org.apache.hc.core5.http.ProtocolVersion;
 import org.apache.hc.core5.net.URIAuthority;
+import static java.util.logging.Level.WARNING;
+import java.util.logging.Logger;
 
 final class ApacheHttpClientHttpAttributesGetter
     implements HttpClientAttributesGetter<HttpRequest, HttpResponse> {
 
+  private static final Logger logger = Logger.getLogger(
+      ApacheHttpClientHttpAttributesGetter.class.getName());
   @Override
   public String getHttpRequestMethod(HttpRequest request) {
     return request.getMethod();
@@ -87,6 +91,7 @@ final class ApacheHttpClientHttpAttributesGetter
     List<String> headersList = new ArrayList<>(headers.length);
     for (Header header : headers) {
       headersList.add(header.getValue());
+      logger.log(WARNING, "======== name: " + header.getName() + " value: " + header.getValue());
     }
     return headersList;
   }

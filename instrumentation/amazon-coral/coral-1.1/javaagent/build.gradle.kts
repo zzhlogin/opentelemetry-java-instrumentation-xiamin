@@ -8,4 +8,5 @@ dependencies {
   implementation(files("libs/CoralModel-1.1.jar"))
   implementation(files("libs/CoralHttpSupport-1.1.jar"))
   implementation(files("libs/CoralMetrics-1.0.jar"))
+  implementation(files("libs/CoralClient-1.1.jar"))
 }
