@@ -8,7 +8,10 @@ package io.opentelemetry.javaagent.instrumentation.coral;
 import com.amazon.coral.service.HttpConstant;
 import com.amazon.coral.service.Job;
 import com.amazon.coral.service.ServiceConstant;
+import com.amazon.coral.service.http.HttpHeaders;
 import io.opentelemetry.instrumentation.api.incubator.semconv.code.CodeAttributesGetter;
+
+import static com.amazon.coral.service.HttpConstant.HTTP_HEADERS;
 
 public class CoralAttributesGetter implements AttributesGetter<Job>, CodeAttributesGetter<Job> {
 
@@ -21,6 +24,13 @@ public class CoralAttributesGetter implements AttributesGetter<Job>, CodeAttribu
   public String getMethodName(Job job) {
     String operation = job.getRequest().getAttribute(ServiceConstant.SERVICE_OPERATION_NAME);
 //    System.out.println("CoralAttributesGetter - OTel operation:: " + operation);
+    if (operation == null) {
+      HttpHeaders headers = job.getRequest().getAttribute(HTTP_HEADERS);
+      CharSequence cs = headers.getValue("X-Amz-Requested-Operation");
+      if (cs != null && cs.length() > 0) {
+        operation = Character.toUpperCase(cs.charAt(0)) + (cs.length() > 1 ? cs.subSequence(1, cs.length()).toString() : "");
+      }
+    }
     return operation;
   }
 

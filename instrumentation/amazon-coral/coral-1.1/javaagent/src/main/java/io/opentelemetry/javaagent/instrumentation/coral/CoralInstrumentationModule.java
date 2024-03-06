@@ -3,7 +3,6 @@ package io.opentelemetry.javaagent.instrumentation.coral;
 import com.google.auto.service.AutoService;
 import io.opentelemetry.javaagent.extension.instrumentation.InstrumentationModule;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeInstrumentation;
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -16,14 +15,6 @@ public class CoralInstrumentationModule extends InstrumentationModule {
 
   @Override
   public List<TypeInstrumentation> typeInstrumentations() {
-//    return asList(new CoralServerInstrumentation(), new CoralClientInstrumentation());
-//    return asList( new CoralClientInstrumentation());
-//    return asList( new CoralClientNewInstrumentation());
-//    return asList( new CoralServerInstrumentation());
-//    return asList( new CoralServerInstrumentation(), new CoralClientNewInstrumentation());
-//    return asList( new CoralClientRpcInstrumentation());
-//    return asList( new CoralServerInstrumentation(), new CoralClientRpcInstrumentation());
-    return asList( new CoralServerInstrumentation());
-//    return asList( new CoralServerNewInstrumentation());
+    return asList( new CoralServerHttpInstrumentation(), new CoralServerRpcInstrumentation());
   }
 }
