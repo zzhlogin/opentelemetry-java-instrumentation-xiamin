@@ -17,20 +17,20 @@ import javax.annotation.Nullable;
 
 enum HttpHeaderSetter implements TextMapSetter<Job> {
   INSTANCE;
-  private static final Logger logger = Logger.getLogger(HttpHeaderSetter.class.getName());
-
 
   @Override
   public void set(@Nullable Job carrier, String key, String value) {
+//    Logger logger = Logger.getLogger("testing-logger from coral client");
+//    logger.log(WARNING,"============ key: " + key + "  value: " + value);
     if (carrier == null) {
       System.out.println("============ carrier is null , exit");
-      logger.log(WARNING, "============ carrier is null , exit");
+//      logger.log(WARNING, "============ carrier is null , exit");
       return;
     }
 
-    HttpHeaders headers = carrier.getAttribute(HttpConstant.HTTP_HEADERS);
+    HttpHeaders headers = carrier.getRequest().getAttribute(HttpConstant.HTTP_HEADERS);
     System.out.println("============ key: " + key + "  value: " + value);
-    logger.log(WARNING, "============ key: " + key + "  value: " + value);
+//    logger.log(WARNING, "============ key: " + key + "  value: " + value);
     headers.addValue(key, value);
   }
 }

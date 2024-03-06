@@ -98,6 +98,11 @@ public class CoralServerRpcInstrumentation implements TypeInstrumentation {
         return;
       }
       Context parentContext = Java8BytecodeBridge.currentContext();
+      if (!instrumenter().shouldStart(parentContext, job)) {
+        System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodEnter for after(): operationName is not null, but it's suppressed => exit");
+        return;
+      }
+
       scope = parentContext.makeCurrent();
       if (scope == null) {
         System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodEnter for after(): scope is null => exit");

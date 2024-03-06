@@ -27,7 +27,8 @@ public class CoralSingletons {
                 CoralSpanNameExtractor.create(codeAttributesGetter))
             .addAttributesExtractor(CoralServerAttributesExtractor.create(codeAttributesGetter))
             .setSpanStatusExtractor(CoralSpanStatusExtractor.create(codeAttributesGetter))
-            .buildInstrumenter(SpanKindExtractor.alwaysServer());
+            .buildServerInstrumenter(HttpHeaderGetter.INSTANCE);
+//            .buildInstrumenter(SpanKindExtractor.alwaysServer());
   }
 
   public static Instrumenter<Job, Job> instrumenter() {

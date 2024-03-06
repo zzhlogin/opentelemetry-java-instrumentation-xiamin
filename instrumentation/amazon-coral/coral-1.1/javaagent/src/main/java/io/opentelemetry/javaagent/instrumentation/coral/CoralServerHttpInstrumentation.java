@@ -90,7 +90,13 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName is not null, but it's suppressed => exit");
         return;
       }
+      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() before calling instrumenter.start()");
+      try {
       context = instrumenter().start(parentContext, job);
+      } catch (Exception e) {
+        System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() + ERROR: " + Throwables.getStackTraceAsString(e));
+      }
+      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() after calling instrumenter.start()");
       scope = context.makeCurrent();
       System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() succeed");
     }

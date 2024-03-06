@@ -20,8 +20,7 @@ enum HttpHeaderSetter implements TextMapSetter<HttpRequest> {
       return;
     }
     carrier.setHeader(key, value);
-    Logger logger = Logger.getLogger("a-testing-logger");
-    System.out.println("============ key: " + key + "  value: " + value);
+    Logger logger = Logger.getLogger("testing-logger from apache client");
     logger.log(WARNING,"============ key: " + key + "  value: " + value);
   }
 }

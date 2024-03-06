@@ -65,10 +65,11 @@ public class CoralClientRpcInstrumentation implements TypeInstrumentation {
         System.out.println("Coral client instrumentation - OnMethodEnter for before() shouldStart = false, exit" + operationName);
         return;
       }
+      System.out.println("Coral client instrumentation - OnMethodEnter for before() before instrumenter.start()");
       context = instrumenter().start(parentContext, job);
       scope = context.makeCurrent();
       System.out.println("Coral client instrumentation - OnMethodEnter for before() make context current, finish" + operationName);
-//      System.out.println("coral exit Before method end: " + context.toString());
+      System.out.println("Coral client instrumentation - OnMethodEnter for before() context = " + context.toString());
     }
 
     @Advice.OnMethodExit(suppress = Throwable.class)
