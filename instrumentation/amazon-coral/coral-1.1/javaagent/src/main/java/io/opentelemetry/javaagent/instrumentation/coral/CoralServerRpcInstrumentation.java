@@ -75,6 +75,9 @@ public class CoralServerRpcInstrumentation implements TypeInstrumentation {
         System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodExit for before(): operationName is not null, but it's suppressed => exit");
         return;
       }
+
+      // we know the RPC span is a local root, so we can call rootContext to create a new context each time
+      parentContext = Java8BytecodeBridge.rootContext();
       context = instrumenter().start(parentContext, job);
       scope = context.makeCurrent();
       System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodExit for before() succeed");

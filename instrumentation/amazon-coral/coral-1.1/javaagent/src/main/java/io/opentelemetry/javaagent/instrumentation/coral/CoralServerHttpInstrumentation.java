@@ -70,6 +70,7 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
 //        }
 //      }
 
+//      Context parentContext = Java8BytecodeBridge.currentContext();
       if (operationName == null) {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName = null => exit");
         return;
@@ -82,10 +83,12 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
 //      });
 
 
-      Context parentContext = Java8BytecodeBridge.currentContext();
+//      Context parentContext = Java8BytecodeBridge.currentContext();
+      Context parentContext = Java8BytecodeBridge.rootContext();
       // TODO: fix the current context cleanup work
 //      Context parentContext = Context.root();
       System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): parentContext =" + parentContext.toString());
+//      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): root context =" + Java8BytecodeBridge.rootContext());
       if (!instrumenter().shouldStart(parentContext, job)) {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName is not null, but it's suppressed => exit");
         return;
