@@ -25,7 +25,6 @@ public class CoralClientSingletons {
             .addAttributesExtractor(CoralServerAttributesExtractor.create(codeAttributesGetter))
             .addAttributesExtractor(new CoralNestedHttpClientSuppressionAttributesExtractor<>())
             .setSpanStatusExtractor(CoralSpanStatusExtractor.create(codeAttributesGetter))
-//            .buildInstrumenter(SpanKindExtractor.alwaysClient());
             .buildClientInstrumenter(HttpHeaderSetter.INSTANCE);
   }
 

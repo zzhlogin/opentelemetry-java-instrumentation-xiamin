@@ -26,18 +26,12 @@ enum HttpHeaderGetter implements TextMapGetter<Job> {
 
   @Override
   public String get(Job carrier, String key) {
-//    Logger logger = Logger.getLogger("testing-logger from coral client");
-//    logger.log(WARNING,"============ key: " + key + "  value: " + value);
     if (carrier == null) {
-      System.out.println("============ Coral instrumentation - HttpHeaderGetter: carrier is null , exit");
-//      logger.log(WARNING, "============ carrier is null , exit");
       return null;
     }
 
     HttpHeaders headers = carrier.getRequest().getAttribute(HttpConstant.HTTP_HEADERS);
-//    logger.log(WARNING, "============ key: " + key + "  value: " + value);
     CharSequence value = headers.getValue(key);
-    System.out.println("============ Coral instrumentation - HttpHeaderGetter: key: " + key + " value: " + value);
     return value != null ? value.toString() : null;
   }
 }

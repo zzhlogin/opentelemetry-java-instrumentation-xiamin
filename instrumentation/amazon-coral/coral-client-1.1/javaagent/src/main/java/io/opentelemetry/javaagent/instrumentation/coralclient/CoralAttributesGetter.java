@@ -20,14 +20,12 @@ public class CoralAttributesGetter implements AttributesGetter<Job>, CodeAttribu
   @Override
   public String getMethodName(Job job) {
     String operation = job.getRequest().getAttribute(ServiceConstant.SERVICE_OPERATION_NAME);
-//    System.out.println("CoralAttributesGetter - OTel operation:: " + operation);
     return operation;
   }
 
   @Override
   public String getServerAddress(Job job) {
     String serverAddress = job.getRequest().getAttribute(HttpConstant.HTTP_HOST);
-//    System.out.println("CoralAttributesGetter - OTel serverAddress:: " + serverAddress);
     return serverAddress;
   }
 
@@ -68,7 +66,6 @@ public class CoralAttributesGetter implements AttributesGetter<Job>, CodeAttribu
 
   public Integer getHttpResponseStatusCode(Job job) {
     Integer statusCode = job.getReply().getAttribute(HttpConstant.HTTP_STATUS_CODE);
-//    System.out.println("CoralAttributesGetter - OTel statusCode:: " + statusCode);
     return statusCode;
   }
 }

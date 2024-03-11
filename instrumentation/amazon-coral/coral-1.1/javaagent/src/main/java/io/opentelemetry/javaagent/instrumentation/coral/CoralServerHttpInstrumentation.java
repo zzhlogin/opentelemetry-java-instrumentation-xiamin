@@ -2,7 +2,6 @@ package io.opentelemetry.javaagent.instrumentation.coral;
 
 import com.amazon.coral.service.Job;
 import com.amazon.coral.service.ServiceConstant;
-import com.amazon.coral.service.http.HttpHeaders;
 import com.google.common.base.Throwables;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
@@ -14,7 +13,6 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import static com.amazon.coral.service.HttpConstant.HTTP_HEADERS;
 import static io.opentelemetry.javaagent.instrumentation.coral.CoralSingletons.instrumenter;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
@@ -26,8 +24,6 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
   @Override
   public ElementMatcher<TypeDescription> typeMatcher() {
     return named("com.amazon.coral.service.HttpHandler");
-//    return named("com.amazon.coral.service.HttpRpcHandler");
-//    return named("com.amazon.coral.service.ActivityHandler");
   }
 
   @Override
@@ -54,54 +50,27 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
         @Advice.Argument(0) Job job,
         @Advice.Local("otelContext") Context context,
         @Advice.Local("otelScope") Scope scope) {
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before()");
-//      boolean isClientRequest = job.getAttribute(ServiceConstant.CLIENT_REQUEST) != null;
-//      System.out.println("Coral server instrumentation - isClientRequest: " + isClientRequest);
       String operationName = job.getRequest().getAttribute(
           ServiceConstant.SERVICE_OPERATION_NAME);
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName = " + operationName);
 
-//      if (operationName == null) {
-//        HttpHeaders headers = job.getRequest().getAttribute(HTTP_HEADERS);
-//        CharSequence cs = headers.getValue("X-Amz-Requested-Operation");
-//        if (cs != null && cs.length() > 0) {
-//          System.out.println("coral exit Before method start: X-Amz-Requested-Operation = " + cs);
-//          operationName = Character.toUpperCase(cs.charAt(0)) + (cs.length() > 1 ? cs.subSequence(1, cs.length()).toString() : "");
-//        }
-//      }
-
-//      Context parentContext = Java8BytecodeBridge.currentContext();
       if (operationName == null) {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName = null => exit");
         return;
       }
 
-//      HttpHeaders headers = job.getRequest().getAttribute(HttpConstant.HTTP_HEADERS);
-//      System.out.println("DEBUG: HTTP header = " + headers.toString());
-//      headers.getHeaderNames().forEach(name -> {
-//        System.out.println("DEBUG: HTTP header name = " + name);
-//      });
-
-
-//      Context parentContext = Java8BytecodeBridge.currentContext();
       Context parentContext = Java8BytecodeBridge.rootContext();
-      // TODO: fix the current context cleanup work
-//      Context parentContext = Context.root();
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): parentContext =" + parentContext.toString());
-//      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): root context =" + Java8BytecodeBridge.rootContext());
+
       if (!instrumenter().shouldStart(parentContext, job)) {
-        System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName is not null, but it's suppressed => exit");
         return;
       }
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() before calling instrumenter.start()");
+
       try {
-      context = instrumenter().start(parentContext, job);
+        context = instrumenter().start(parentContext, job);
       } catch (Exception e) {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() + ERROR: " + Throwables.getStackTraceAsString(e));
       }
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() after calling instrumenter.start()");
+
       scope = context.makeCurrent();
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before() succeed");
     }
   }
 
@@ -113,10 +82,8 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
         @Advice.Argument(0) Job job,
         @Advice.Local("otelContext") Context context,
         @Advice.Local("otelScope") Scope scope) {
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after()");
       String operationName = job.getRequest().getAttribute(
           ServiceConstant.SERVICE_OPERATION_NAME);
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after(): operationName = " + operationName);
       if (operationName == null) {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after(): operationName = null => exit");
         return;
@@ -131,14 +98,12 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
       try {
         scope.close();
         Throwable failure = job.getFailure();
-        System.out.println("job get failure = " + failure);
         instrumenter().end(parentContext, job, job, job.getFailure());
       } catch (Throwable e) {
         System.out.println("End span in error: " + Throwables.getStackTraceAsString(e));
       }
-      System.out.println("coral trace id: " + span.getSpanContext().getTraceId());
+
       job.getMetrics().addProperty("AwsXRayTraceId", span.getSpanContext().getTraceId());
-      System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after() succeed");
     }
   }
 
