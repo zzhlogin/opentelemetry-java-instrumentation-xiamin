@@ -94,11 +94,13 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
         System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after(): scope is null => exit");
         return;
       }
+
       Span span = Span.fromContext(parentContext);
       try {
         scope.close();
         Throwable failure = job.getFailure();
         instrumenter().end(parentContext, job, job, job.getFailure());
+        Java8BytecodeBridge.rootContext().makeCurrent();
       } catch (Throwable e) {
         System.out.println("End span in error: " + Throwables.getStackTraceAsString(e));
       }

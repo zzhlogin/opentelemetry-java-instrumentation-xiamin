@@ -34,12 +34,6 @@ public class CoralServerRpcInstrumentation implements TypeInstrumentation {
             .and(named("before"))
             .and(takesArgument(0, named("com.amazon.coral.service.Job"))),
         this.getClass().getName() + "$CoralReqBeforeAdvice");
-    transformer.applyAdviceToMethod(
-        isMethod()
-            .and(isPublic())
-            .and(named("after"))
-            .and(takesArgument(0, named("com.amazon.coral.service.Job"))),
-        this.getClass().getName() + "$CoralReqAfterAdvice");
   }
 
 
@@ -69,43 +63,6 @@ public class CoralServerRpcInstrumentation implements TypeInstrumentation {
       parentContext = Java8BytecodeBridge.rootContext();
       context = instrumenter().start(parentContext, job);
       scope = context.makeCurrent();
-    }
-  }
-
-  @SuppressWarnings("unused")
-  public static class CoralReqAfterAdvice {
-
-    @Advice.OnMethodEnter(suppress = Throwable.class)
-    public static void methodEnter(
-        @Advice.Argument(0) Job job,
-        @Advice.Local("otelContext") Context context,
-        @Advice.Local("otelScope") Scope scope) {
-      String operationName = job.getRequest().getAttribute(
-          ServiceConstant.SERVICE_OPERATION_NAME);
-      if (operationName == null) {
-        System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodEnter for after(): operationName = null => exit");
-        return;
-      }
-
-      Context parentContext = Java8BytecodeBridge.currentContext();
-      if (!instrumenter().shouldStart(parentContext, job)) {
-        return;
-      }
-
-      scope = parentContext.makeCurrent();
-      if (scope == null) {
-        System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodEnter for after(): scope is null => exit");
-        return;
-      }
-      Span span = Span.fromContext(parentContext);
-      try {
-        scope.close();
-        Throwable failure = job.getFailure();
-        instrumenter().end(parentContext, job, job, job.getFailure());
-      } catch (Throwable e) {
-        System.out.println("End span in error: " + Throwables.getStackTraceAsString(e));
-      }
-      job.getMetrics().addProperty("AwsXRayTraceId", span.getSpanContext().getTraceId());
     }
   }
 
