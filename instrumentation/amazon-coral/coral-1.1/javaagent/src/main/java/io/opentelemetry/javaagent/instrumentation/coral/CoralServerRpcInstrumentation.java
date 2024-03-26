@@ -50,7 +50,6 @@ public class CoralServerRpcInstrumentation implements TypeInstrumentation {
           ServiceConstant.SERVICE_OPERATION_NAME);
 
       if (operationName == null) {
-        System.out.println("DEBUG: Coral server RPC instrumentation - OnMethodExit for before(): operationName = null => exit");
         return;
       }
 

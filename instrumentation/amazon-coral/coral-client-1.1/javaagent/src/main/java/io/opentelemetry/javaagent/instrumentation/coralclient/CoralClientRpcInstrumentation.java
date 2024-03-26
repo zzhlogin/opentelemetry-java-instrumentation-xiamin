@@ -50,7 +50,6 @@ public class CoralClientRpcInstrumentation implements TypeInstrumentation {
       String operationName = job.getRequest().getAttribute(
           ServiceConstant.SERVICE_OPERATION_NAME);
       if (operationName == null) {
-        System.out.println("Coral client instrumentation - OnMethodEnter for before() operationName = null, exit" + operationName);
         return;
       }
 
@@ -72,12 +71,10 @@ public class CoralClientRpcInstrumentation implements TypeInstrumentation {
       String operationName = job.getRequest().getAttribute(
           ServiceConstant.SERVICE_OPERATION_NAME);
       if (operationName == null) {
-        System.out.println("Coral client instrumentation - OnMethodExit for before() operationName = null, exit");
         return;
       }
 
       if (scope == null) {
-        System.out.println("Coral client instrumentation - OnMethodExit for before() scope is null, exit");
         return;
       }
 

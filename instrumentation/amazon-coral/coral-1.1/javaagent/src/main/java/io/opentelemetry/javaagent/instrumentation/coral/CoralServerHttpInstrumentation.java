@@ -54,7 +54,6 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
           ServiceConstant.SERVICE_OPERATION_NAME);
 
       if (operationName == null) {
-        System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodExit for before(): operationName = null => exit");
         return;
       }
 
@@ -85,13 +84,11 @@ public class CoralServerHttpInstrumentation implements TypeInstrumentation {
       String operationName = job.getRequest().getAttribute(
           ServiceConstant.SERVICE_OPERATION_NAME);
       if (operationName == null) {
-        System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after(): operationName = null => exit");
         return;
       }
       Context parentContext = Java8BytecodeBridge.currentContext();
       scope = parentContext.makeCurrent();
       if (scope == null) {
-        System.out.println("DEBUG: Coral server HTTP instrumentation - OnMethodEnter for after(): scope is null => exit");
         return;
       }
 
