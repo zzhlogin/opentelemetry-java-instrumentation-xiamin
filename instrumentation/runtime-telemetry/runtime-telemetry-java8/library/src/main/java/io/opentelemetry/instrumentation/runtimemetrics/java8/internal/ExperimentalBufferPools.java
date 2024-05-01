@@ -12,19 +12,15 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableLongMeasurement;
-import io.opentelemetry.instrumentation.api.internal.SemconvStability;
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Registers measurements that generate experimental metrics about buffer pools. These metrics will
- * only be generated the preview of stable JVM semantic conventions (e.g. by setting the {@code
- * otel.semconv-stability.opt-in} system property to {@code jvm}) is enabled.
+ * Registers measurements that generate experimental metrics about buffer pools.
  *
  * <p>This class is internal and is hence not for public use. Its APIs are unstable and can change
  * at any time.
@@ -45,9 +41,6 @@ public final class ExperimentalBufferPools {
   static List<AutoCloseable> registerObservers(
       OpenTelemetry openTelemetry, List<BufferPoolMXBean> bufferBeans) {
 
-    if (!SemconvStability.emitStableJvmSemconv()) {
-      return Collections.emptyList();
-    }
     List<AutoCloseable> observables = new ArrayList<>();
     Meter meter = JmxRuntimeMetricsUtil.getMeter(openTelemetry);
     observables.add(

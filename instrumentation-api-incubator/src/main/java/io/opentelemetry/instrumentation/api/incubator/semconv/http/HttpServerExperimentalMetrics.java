@@ -19,11 +19,12 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.ContextKey;
 import io.opentelemetry.instrumentation.api.instrumenter.OperationListener;
 import io.opentelemetry.instrumentation.api.instrumenter.OperationMetrics;
+import io.opentelemetry.instrumentation.api.internal.OperationMetricsUtil;
 import java.util.logging.Logger;
 
 /**
  * {@link OperationListener} which keeps track of <a
- * href="https://github.com/open-telemetry/semantic-conventions/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server">non-stable
+ * href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#http-server">non-stable
  * HTTP server metrics</a>: <a
  * href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpserveractive_requests">the
  * number of in-flight request</a>, <a
@@ -46,7 +47,8 @@ public final class HttpServerExperimentalMetrics implements OperationListener {
    * io.opentelemetry.instrumentation.api.instrumenter.InstrumenterBuilder}.
    */
   public static OperationMetrics get() {
-    return HttpServerExperimentalMetrics::new;
+    return OperationMetricsUtil.create(
+        "experimental http server", HttpServerExperimentalMetrics::new);
   }
 
   private final LongUpDownCounter activeRequests;

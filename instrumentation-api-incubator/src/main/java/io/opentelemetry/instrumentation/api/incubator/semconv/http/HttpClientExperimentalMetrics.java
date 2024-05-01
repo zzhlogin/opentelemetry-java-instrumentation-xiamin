@@ -17,15 +17,16 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.ContextKey;
 import io.opentelemetry.instrumentation.api.instrumenter.OperationListener;
 import io.opentelemetry.instrumentation.api.instrumenter.OperationMetrics;
+import io.opentelemetry.instrumentation.api.internal.OperationMetricsUtil;
 import java.util.logging.Logger;
 
 /**
  * {@link OperationListener} which keeps track of <a
- * href="https://github.com/open-telemetry/semantic-conventions/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client">non-stable
+ * href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#http-client">non-stable
  * HTTP client metrics</a>: <a
- * href="https://github.com/open-telemetry/semantic-conventions/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientrequestsize">the
+ * href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpclientrequestsize">the
  * request size </a> and <a
- * href="https://github.com/open-telemetry/semantic-conventions/blob/main/specification/metrics/semantic_conventions/http-metrics.md#metric-httpclientresponsesize">
+ * href="https://github.com/open-telemetry/semantic-conventions/blob/main/docs/http/http-metrics.md#metric-httpclientresponsesize">
  * the response size</a>.
  */
 public final class HttpClientExperimentalMetrics implements OperationListener {
@@ -42,7 +43,8 @@ public final class HttpClientExperimentalMetrics implements OperationListener {
    * io.opentelemetry.instrumentation.api.instrumenter.InstrumenterBuilder}.
    */
   public static OperationMetrics get() {
-    return HttpClientExperimentalMetrics::new;
+    return OperationMetricsUtil.create(
+        "experimental http client", HttpClientExperimentalMetrics::new);
   }
 
   private final LongHistogram requestSize;

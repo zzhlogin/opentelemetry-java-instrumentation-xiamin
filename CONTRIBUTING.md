@@ -79,12 +79,20 @@ See [Understanding Muzzle](docs/contributing/muzzle.md)
 ## Troubleshooting PR build failures
 
 The build logs are very long and there is a lot of parallelization, so the logs can be hard to
-decipher, but if you scroll to the bottom you should see something like:
+decipher, but if you expand the "Build scan" step, you should see something like:
 
 ```
-Publishing build scan...
+Run cat build-scan.txt
 https://gradle.com/s/ila4qwp5lcf5s
 ```
 
 Opening the build scan link can sometimes take several seconds (it's a large build), but it
 typically makes it a lot clearer what's failing.
+
+### Draft PRs
+
+Draft PRs are welcome, especially when exploring new ideas or experimenting with a hypothesis.
+However, draft PRs may not receive the same degree of attention, feedback, or scrutiny unless
+requested directly. In order to help keep the PR backlog maintainable, drafts older than 6 months
+will be closed by the project maintainers. This should not be interpreted as a rejection. Closed
+PRs may be reopened by the author when time or interest allows.

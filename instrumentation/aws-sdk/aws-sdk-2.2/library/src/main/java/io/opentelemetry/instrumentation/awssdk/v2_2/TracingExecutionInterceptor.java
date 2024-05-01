@@ -17,7 +17,8 @@ import io.opentelemetry.contrib.awsxray.propagator.AwsXrayPropagator;
 import io.opentelemetry.instrumentation.api.instrumenter.Instrumenter;
 import io.opentelemetry.instrumentation.api.internal.InstrumenterUtil;
 import io.opentelemetry.instrumentation.api.internal.Timer;
-import io.opentelemetry.semconv.SemanticAttributes;
+import io.opentelemetry.semconv.HttpAttributes;
+import io.opentelemetry.semconv.incubating.DbIncubatingAttributes;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -65,7 +66,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
 
   private final Instrumenter<ExecutionAttributes, Response> requestInstrumenter;
   private final Instrumenter<SqsReceiveRequest, Response> consumerReceiveInstrumenter;
-  private final Instrumenter<SqsProcessRequest, Void> consumerProcessInstrumenter;
+  private final Instrumenter<SqsProcessRequest, Response> consumerProcessInstrumenter;
   private final Instrumenter<ExecutionAttributes, Response> producerInstrumenter;
   private final boolean captureExperimentalSpanAttributes;
 
@@ -77,7 +78,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
     return consumerReceiveInstrumenter;
   }
 
-  Instrumenter<SqsProcessRequest, Void> getConsumerProcessInstrumenter() {
+  Instrumenter<SqsProcessRequest, Response> getConsumerProcessInstrumenter() {
     return consumerProcessInstrumenter;
   }
 
@@ -98,7 +99,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
   TracingExecutionInterceptor(
       Instrumenter<ExecutionAttributes, Response> requestInstrumenter,
       Instrumenter<SqsReceiveRequest, Response> consumerReceiveInstrumenter,
-      Instrumenter<SqsProcessRequest, Void> consumerProcessInstrumenter,
+      Instrumenter<SqsProcessRequest, Response> consumerProcessInstrumenter,
       Instrumenter<ExecutionAttributes, Response> producerInstrumenter,
       boolean captureExperimentalSpanAttributes,
       TextMapPropagator messagingPropagator,
@@ -311,10 +312,10 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
     fieldMapper.mapToAttributes(sdkRequest, awsSdkRequest, span);
 
     if (awsSdkRequest.type() == DYNAMODB) {
-      span.setAttribute(SemanticAttributes.DB_SYSTEM, "dynamodb");
+      span.setAttribute(DbIncubatingAttributes.DB_SYSTEM, "dynamodb");
       String operation = attributes.getAttribute(SdkExecutionAttribute.OPERATION_NAME);
       if (operation != null) {
-        span.setAttribute(SemanticAttributes.DB_OPERATION, operation);
+        span.setAttribute(DbIncubatingAttributes.DB_OPERATION, operation);
       }
     }
   }
@@ -381,7 +382,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
                   .collect(Collectors.joining("\n"));
           Attributes attributes =
               Attributes.of(
-                  SemanticAttributes.HTTP_RESPONSE_STATUS_CODE,
+                  HttpAttributes.HTTP_RESPONSE_STATUS_CODE,
                   Long.valueOf(errorCode),
                   HTTP_ERROR_MSG,
                   errorMsg);

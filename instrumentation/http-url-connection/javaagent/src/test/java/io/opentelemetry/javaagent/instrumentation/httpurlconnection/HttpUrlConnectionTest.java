@@ -14,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.instrumentation.api.semconv.http.internal.HttpAttributes;
 import io.opentelemetry.instrumentation.test.utils.PortUtils;
 import io.opentelemetry.instrumentation.testing.junit.InstrumentationExtension;
 import io.opentelemetry.instrumentation.testing.junit.http.AbstractHttpClientTest;
@@ -22,7 +21,11 @@ import io.opentelemetry.instrumentation.testing.junit.http.HttpClientInstrumenta
 import io.opentelemetry.instrumentation.testing.junit.http.HttpClientTestOptions;
 import io.opentelemetry.sdk.testing.assertj.AttributeAssertion;
 import io.opentelemetry.sdk.trace.data.StatusData;
-import io.opentelemetry.semconv.SemanticAttributes;
+import io.opentelemetry.semconv.ErrorAttributes;
+import io.opentelemetry.semconv.HttpAttributes;
+import io.opentelemetry.semconv.NetworkAttributes;
+import io.opentelemetry.semconv.ServerAttributes;
+import io.opentelemetry.semconv.UrlAttributes;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,12 +123,12 @@ class HttpUrlConnectionTest extends AbstractHttpClientTest<HttpURLConnection> {
     List<AttributeAssertion> attributes =
         new ArrayList<>(
             Arrays.asList(
-                equalTo(SemanticAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
-                equalTo(SemanticAttributes.SERVER_ADDRESS, "localhost"),
-                equalTo(SemanticAttributes.SERVER_PORT, url.getPort()),
-                equalTo(SemanticAttributes.URL_FULL, url.toString()),
-                equalTo(SemanticAttributes.HTTP_REQUEST_METHOD, "GET"),
-                equalTo(SemanticAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
+                equalTo(NetworkAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
+                equalTo(ServerAttributes.SERVER_ADDRESS, "localhost"),
+                equalTo(ServerAttributes.SERVER_PORT, url.getPort()),
+                equalTo(UrlAttributes.URL_FULL, url.toString()),
+                equalTo(HttpAttributes.HTTP_REQUEST_METHOD, "GET"),
+                equalTo(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
 
     testing.waitAndAssertTraces(
         trace ->
@@ -165,12 +168,12 @@ class HttpUrlConnectionTest extends AbstractHttpClientTest<HttpURLConnection> {
     List<AttributeAssertion> attributes =
         new ArrayList<>(
             Arrays.asList(
-                equalTo(SemanticAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
-                equalTo(SemanticAttributes.SERVER_ADDRESS, "localhost"),
-                equalTo(SemanticAttributes.SERVER_PORT, url.getPort()),
-                equalTo(SemanticAttributes.URL_FULL, url.toString()),
-                equalTo(SemanticAttributes.HTTP_REQUEST_METHOD, "GET"),
-                equalTo(SemanticAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
+                equalTo(NetworkAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
+                equalTo(ServerAttributes.SERVER_ADDRESS, "localhost"),
+                equalTo(ServerAttributes.SERVER_PORT, url.getPort()),
+                equalTo(UrlAttributes.URL_FULL, url.toString()),
+                equalTo(HttpAttributes.HTTP_REQUEST_METHOD, "GET"),
+                equalTo(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
 
     testing.waitAndAssertTraces(
         trace ->
@@ -216,12 +219,12 @@ class HttpUrlConnectionTest extends AbstractHttpClientTest<HttpURLConnection> {
     List<AttributeAssertion> attributes =
         new ArrayList<>(
             Arrays.asList(
-                equalTo(SemanticAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
-                equalTo(SemanticAttributes.SERVER_ADDRESS, "localhost"),
-                equalTo(SemanticAttributes.SERVER_PORT, url.getPort()),
-                equalTo(SemanticAttributes.URL_FULL, url.toString()),
-                equalTo(SemanticAttributes.HTTP_REQUEST_METHOD, "POST"),
-                equalTo(SemanticAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
+                equalTo(NetworkAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
+                equalTo(ServerAttributes.SERVER_ADDRESS, "localhost"),
+                equalTo(ServerAttributes.SERVER_PORT, url.getPort()),
+                equalTo(UrlAttributes.URL_FULL, url.toString()),
+                equalTo(HttpAttributes.HTTP_REQUEST_METHOD, "POST"),
+                equalTo(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
 
     testing.waitAndAssertTraces(
         trace ->
@@ -269,12 +272,12 @@ class HttpUrlConnectionTest extends AbstractHttpClientTest<HttpURLConnection> {
     List<AttributeAssertion> attributes =
         new ArrayList<>(
             Arrays.asList(
-                equalTo(SemanticAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
-                equalTo(SemanticAttributes.SERVER_ADDRESS, "localhost"),
-                equalTo(SemanticAttributes.SERVER_PORT, url.getPort()),
-                equalTo(SemanticAttributes.URL_FULL, url.toString()),
-                equalTo(SemanticAttributes.HTTP_REQUEST_METHOD, "POST"),
-                equalTo(SemanticAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
+                equalTo(NetworkAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
+                equalTo(ServerAttributes.SERVER_ADDRESS, "localhost"),
+                equalTo(ServerAttributes.SERVER_PORT, url.getPort()),
+                equalTo(UrlAttributes.URL_FULL, url.toString()),
+                equalTo(HttpAttributes.HTTP_REQUEST_METHOD, "POST"),
+                equalTo(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, STATUS)));
 
     testing.waitAndAssertTraces(
         trace ->
@@ -311,12 +314,12 @@ class HttpUrlConnectionTest extends AbstractHttpClientTest<HttpURLConnection> {
     List<AttributeAssertion> attributes =
         new ArrayList<>(
             Arrays.asList(
-                equalTo(SemanticAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
-                equalTo(SemanticAttributes.SERVER_ADDRESS, "localhost"),
-                equalTo(SemanticAttributes.SERVER_PORT, PortUtils.UNUSABLE_PORT),
-                equalTo(SemanticAttributes.URL_FULL, uri),
-                equalTo(SemanticAttributes.HTTP_REQUEST_METHOD, "GET"),
-                equalTo(HttpAttributes.ERROR_TYPE, "java.net.ConnectException")));
+                equalTo(NetworkAttributes.NETWORK_PROTOCOL_VERSION, "1.1"),
+                equalTo(ServerAttributes.SERVER_ADDRESS, "localhost"),
+                equalTo(ServerAttributes.SERVER_PORT, PortUtils.UNUSABLE_PORT),
+                equalTo(UrlAttributes.URL_FULL, uri),
+                equalTo(HttpAttributes.HTTP_REQUEST_METHOD, "GET"),
+                equalTo(ErrorAttributes.ERROR_TYPE, "java.net.ConnectException")));
 
     testing.waitAndAssertTraces(
         trace ->

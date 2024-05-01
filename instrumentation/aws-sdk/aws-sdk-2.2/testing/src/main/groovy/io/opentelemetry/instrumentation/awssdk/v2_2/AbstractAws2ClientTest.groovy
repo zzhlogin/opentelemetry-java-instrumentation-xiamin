@@ -6,7 +6,11 @@
 package io.opentelemetry.instrumentation.awssdk.v2_2
 
 
-import io.opentelemetry.semconv.SemanticAttributes
+import io.opentelemetry.semconv.incubating.MessagingIncubatingAttributes
+import io.opentelemetry.semconv.incubating.RpcIncubatingAttributes
+import io.opentelemetry.semconv.ServerAttributes
+import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.UrlAttributes
 import io.opentelemetry.testing.internal.armeria.common.HttpData
 import io.opentelemetry.testing.internal.armeria.common.HttpResponse
 import io.opentelemetry.testing.internal.armeria.common.HttpStatus
@@ -31,6 +35,8 @@ import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.sns.SnsAsyncClient
+import software.amazon.awssdk.services.sns.SnsClient
+import software.amazon.awssdk.services.sns.model.PublishRequest
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest
@@ -84,10 +90,10 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
     setup:
     configureSdkClient(builder)
     def client = builder
-      .endpointOverride(clientUri)
-      .region(Region.AP_NORTHEAST_1)
-      .credentialsProvider(CREDENTIALS_PROVIDER)
-      .build()
+        .endpointOverride(clientUri)
+        .region(Region.AP_NORTHEAST_1)
+        .credentialsProvider(CREDENTIALS_PROVIDER)
+        .build()
 
     if (body instanceof Closure) {
       server.enqueue(body.call())
@@ -116,18 +122,18 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               // the bucket name is a valid DNS label, even in the case that we are using an endpoint override.
               // Previously the sdk was only doing that if endpoint had "s3" as label in the FQDN.
               // Our test assert both cases so that we don't need to know what version is being tested.
-              "$SemanticAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
-              "$SemanticAttributes.URL_FULL" { it.startsWith("http://somebucket.localhost:${server.httpPort()}") || it.startsWith("http://localhost:${server.httpPort()}/somebucket") }
+              "$ServerAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
+              "$UrlAttributes.URL_FULL" { it.startsWith("http://somebucket.localhost:${server.httpPort()}") || it.startsWith("http://localhost:${server.httpPort()}/somebucket") }
             } else {
-              "$SemanticAttributes.SERVER_ADDRESS" "localhost"
-              "$SemanticAttributes.URL_FULL" { it.startsWith("http://localhost:${server.httpPort()}") }
+              "$ServerAttributes.SERVER_ADDRESS" "localhost"
+              "$UrlAttributes.URL_FULL" { it.startsWith("http://localhost:${server.httpPort()}") }
             }
-            "$SemanticAttributes.SERVER_PORT" server.httpPort()
-            "$SemanticAttributes.HTTP_REQUEST_METHOD" "$method"
-            "$SemanticAttributes.HTTP_RESPONSE_STATUS_CODE" 200
-            "$SemanticAttributes.RPC_SYSTEM" "aws-api"
-            "$SemanticAttributes.RPC_SERVICE" "$service"
-            "$SemanticAttributes.RPC_METHOD" "${operation}"
+            "$ServerAttributes.SERVER_PORT" server.httpPort()
+            "$HttpAttributes.HTTP_REQUEST_METHOD" "$method"
+            "$HttpAttributes.HTTP_RESPONSE_STATUS_CODE" 200
+            "$RpcIncubatingAttributes.RPC_SYSTEM" "aws-api"
+            "$RpcIncubatingAttributes.RPC_SERVICE" "$service"
+            "$RpcIncubatingAttributes.RPC_METHOD" "${operation}"
             "aws.agent" "java-aws-sdk"
             "aws.requestId" "$requestId"
             if (service == "S3") {
@@ -136,12 +142,14 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               "aws.queue.name" "somequeue"
             } else if (service == "Sqs" && operation == "SendMessage") {
               "aws.queue.url" QUEUE_URL
-              "$SemanticAttributes.MESSAGING_DESTINATION_NAME" "somequeue"
-              "$SemanticAttributes.MESSAGING_OPERATION" "publish"
-              "$SemanticAttributes.MESSAGING_MESSAGE_ID" String
-              "$SemanticAttributes.MESSAGING_SYSTEM" "AmazonSQS"
+              "$MessagingIncubatingAttributes.MESSAGING_DESTINATION_NAME" "somequeue"
+              "$MessagingIncubatingAttributes.MESSAGING_OPERATION" "publish"
+              "$MessagingIncubatingAttributes.MESSAGING_MESSAGE_ID" String
+              "$MessagingIncubatingAttributes.MESSAGING_SYSTEM" "AmazonSQS"
             } else if (service == "Kinesis") {
               "aws.stream.name" "somestream"
+            } else if (service == "Sns") {
+              "$MessagingIncubatingAttributes.MESSAGING_DESTINATION_NAME" "somearn"
             }
           }
         }
@@ -156,6 +164,26 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
     "S3"      | "CreateBucket"      | "PUT"  | "UNKNOWN"                              | s3ClientBuilder()       | { c -> c.createBucket(CreateBucketRequest.builder().bucket("somebucket").build()) }              | ""
     "S3"      | "GetObject"         | "GET"  | "UNKNOWN"                              | s3ClientBuilder()       | { c -> c.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build()) }     | ""
     "Kinesis" | "DeleteStream"      | "POST" | "UNKNOWN"                              | KinesisClient.builder() | { c -> c.deleteStream(DeleteStreamRequest.builder().streamName("somestream").build()) }          | ""
+    "Sns"     | "Publish"           | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | SnsClient.builder()     | { c -> c.publish(PublishRequest.builder().message("somemessage").topicArn("somearn").build()) }  | """
+          <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+              <PublishResult>
+                  <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+              </PublishResult>
+              <ResponseMetadata>
+                  <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+              </ResponseMetadata>
+          </PublishResponse>
+      """
+    "Sns"     | "Publish"           | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | SnsClient.builder()     | { c -> c.publish(PublishRequest.builder().message("somemessage").targetArn("somearn").build()) } | """
+          <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+              <PublishResult>
+                  <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+              </PublishResult>
+              <ResponseMetadata>
+                  <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+              </ResponseMetadata>
+          </PublishResponse>
+      """
     "Sqs"     | "CreateQueue"       | "POST" | "7a62c49f-347e-4fc4-9331-6e8e7a96aa73" | SqsClient.builder()     | { c -> c.createQueue(CreateQueueRequest.builder().queueName("somequeue").build()) }              | {
       if (!Boolean.getBoolean("testLatestDeps")) {
         def content = """
@@ -172,9 +200,9 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           }
           """
       ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
-        .contentType(MediaType.PLAIN_TEXT_UTF_8)
-        .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
-        .build()
+          .contentType(MediaType.PLAIN_TEXT_UTF_8)
+          .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
+          .build()
       return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
     }
     "Sqs"     | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsClient.builder()     | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) } | {
@@ -199,9 +227,9 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           }
           """
       ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
-        .contentType(MediaType.PLAIN_TEXT_UTF_8)
-        .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
-        .build()
+          .contentType(MediaType.PLAIN_TEXT_UTF_8)
+          .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
+          .build()
       return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
     }
     "Ec2"     | "AllocateAddress"   | "POST" | "59dbff89-35bd-4eac-99ed-be587EXAMPLE" | Ec2Client.builder()     | { c -> c.allocateAddress() }                                                                     | """
@@ -223,10 +251,10 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
     setup:
     configureSdkClient(builder)
     def client = builder
-      .endpointOverride(clientUri)
-      .region(Region.AP_NORTHEAST_1)
-      .credentialsProvider(CREDENTIALS_PROVIDER)
-      .build()
+        .endpointOverride(clientUri)
+        .region(Region.AP_NORTHEAST_1)
+        .credentialsProvider(CREDENTIALS_PROVIDER)
+        .build()
 
     if (body instanceof Closure) {
       server.enqueue(body.call())
@@ -254,18 +282,18 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               // the bucket name is a valid DNS label, even in the case that we are using an endpoint override.
               // Previously the sdk was only doing that if endpoint had "s3" as label in the FQDN.
               // Our test assert both cases so that we don't need to know what version is being tested.
-              "$SemanticAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
-              "$SemanticAttributes.URL_FULL" { it.startsWith("http://somebucket.localhost:${server.httpPort()}") || it.startsWith("http://localhost:${server.httpPort()}") }
+              "$ServerAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
+              "$UrlAttributes.URL_FULL" { it.startsWith("http://somebucket.localhost:${server.httpPort()}") || it.startsWith("http://localhost:${server.httpPort()}") }
             } else {
-              "$SemanticAttributes.SERVER_ADDRESS" "localhost"
-              "$SemanticAttributes.URL_FULL" { it == "http://localhost:${server.httpPort()}" || it == "http://localhost:${server.httpPort()}/" }
+              "$ServerAttributes.SERVER_ADDRESS" "localhost"
+              "$UrlAttributes.URL_FULL" { it == "http://localhost:${server.httpPort()}" || it == "http://localhost:${server.httpPort()}/" }
             }
-            "$SemanticAttributes.SERVER_PORT" server.httpPort()
-            "$SemanticAttributes.HTTP_REQUEST_METHOD" "$method"
-            "$SemanticAttributes.HTTP_RESPONSE_STATUS_CODE" 200
-            "$SemanticAttributes.RPC_SYSTEM" "aws-api"
-            "$SemanticAttributes.RPC_SERVICE" "$service"
-            "$SemanticAttributes.RPC_METHOD" "${operation}"
+            "$ServerAttributes.SERVER_PORT" server.httpPort()
+            "$HttpAttributes.HTTP_REQUEST_METHOD" "$method"
+            "$HttpAttributes.HTTP_RESPONSE_STATUS_CODE" 200
+            "$RpcIncubatingAttributes.RPC_SYSTEM" "aws-api"
+            "$RpcIncubatingAttributes.RPC_SERVICE" "$service"
+            "$RpcIncubatingAttributes.RPC_METHOD" "${operation}"
             "aws.agent" "java-aws-sdk"
             "aws.requestId" "$requestId"
             if (service == "S3") {
@@ -274,12 +302,14 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               "aws.queue.name" "somequeue"
             } else if (service == "Sqs" && operation == "SendMessage") {
               "aws.queue.url" QUEUE_URL
-              "$SemanticAttributes.MESSAGING_DESTINATION_NAME" "somequeue"
-              "$SemanticAttributes.MESSAGING_OPERATION" "publish"
-              "$SemanticAttributes.MESSAGING_MESSAGE_ID" String
-              "$SemanticAttributes.MESSAGING_SYSTEM" "AmazonSQS"
+              "$MessagingIncubatingAttributes.MESSAGING_DESTINATION_NAME" "somequeue"
+              "$MessagingIncubatingAttributes.MESSAGING_OPERATION" "publish"
+              "$MessagingIncubatingAttributes.MESSAGING_MESSAGE_ID" String
+              "$MessagingIncubatingAttributes.MESSAGING_SYSTEM" "AmazonSQS"
             } else if (service == "Kinesis") {
               "aws.stream.name" "somestream"
+            } else if (service == "Sns") {
+              "$MessagingIncubatingAttributes.MESSAGING_DESTINATION_NAME" "somearn"
             }
           }
         }
@@ -322,9 +352,9 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           }
           """
       ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
-        .contentType(MediaType.PLAIN_TEXT_UTF_8)
-        .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
-        .build()
+          .contentType(MediaType.PLAIN_TEXT_UTF_8)
+          .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
+          .build()
       return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
     }
     "Sqs"   | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsAsyncClient.builder() | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) }                                 | {
@@ -349,9 +379,9 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           }
           """
       ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
-        .contentType(MediaType.PLAIN_TEXT_UTF_8)
-        .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
-        .build()
+          .contentType(MediaType.PLAIN_TEXT_UTF_8)
+          .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
+          .build()
       return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
     }
     "Ec2"   | "AllocateAddress"   | "POST" | "59dbff89-35bd-4eac-99ed-be587EXAMPLE" | Ec2AsyncClient.builder() | { c -> c.allocateAddress() }                                                                                                     | """
@@ -366,7 +396,7 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           <ResponseMetadata><RequestId>0ac9cda2-bbf4-11d3-f92b-31fa5e8dbc99</RequestId></ResponseMetadata>
         </DeleteOptionGroupResponse>
         """
-    "Sns" | "Publish" | "POST" | "f187a3c1-376f-11df-8963-01868b7c937a" | SnsAsyncClient.builder() | { SnsAsyncClient c -> c.publish(r -> r.message("hello")) } | """
+    "Sns"   | "Publish"           | "POST" | "f187a3c1-376f-11df-8963-01868b7c937a" | SnsAsyncClient.builder() | { SnsAsyncClient c -> c.publish(r -> r.message("hello").topicArn("somearn")) }                                                   | """
       <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
           <PublishResult>
               <MessageId>94f20ce6-13c5-43a0-9a9e-ca52d816e90b</MessageId>
@@ -387,13 +417,13 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
     server.enqueue(HttpResponse.delayed(HttpResponse.of(HttpStatus.OK), Duration.ofMillis(5000)))
     server.enqueue(HttpResponse.delayed(HttpResponse.of(HttpStatus.OK), Duration.ofMillis(5000)))
     def builder = S3Client.builder()
-      .overrideConfiguration(createOverrideConfigurationBuilder()
-        .retryPolicy(RetryPolicy.builder().numRetries(1).build())
-        .build())
-      .endpointOverride(clientUri)
-      .region(Region.AP_NORTHEAST_1)
-      .credentialsProvider(CREDENTIALS_PROVIDER)
-      .httpClientBuilder(ApacheHttpClient.builder().socketTimeout(Duration.ofMillis(50)))
+        .overrideConfiguration(createOverrideConfigurationBuilder()
+            .retryPolicy(RetryPolicy.builder().numRetries(1).build())
+            .build())
+        .endpointOverride(clientUri)
+        .region(Region.AP_NORTHEAST_1)
+        .credentialsProvider(CREDENTIALS_PROVIDER)
+        .httpClientBuilder(ApacheHttpClient.builder().socketTimeout(Duration.ofMillis(50)))
 
     if (Boolean.getBoolean("testLatestDeps")) {
       builder.forcePathStyle(true)
@@ -420,13 +450,13 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
             // the bucket name is a valid DNS label, even in the case that we are using an endpoint override.
             // Previously the sdk was only doing that if endpoint had "s3" as label in the FQDN.
             // Our test assert both cases so that we don't need to know what version is being tested.
-            "$SemanticAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
-            "$SemanticAttributes.URL_FULL" { it == "http://somebucket.localhost:${server.httpPort()}/somekey" || it == "http://localhost:${server.httpPort()}/somebucket/somekey" }
-            "$SemanticAttributes.SERVER_PORT" server.httpPort()
-            "$SemanticAttributes.HTTP_REQUEST_METHOD" "GET"
-            "$SemanticAttributes.RPC_SYSTEM" "aws-api"
-            "$SemanticAttributes.RPC_SERVICE" "S3"
-            "$SemanticAttributes.RPC_METHOD" "GetObject"
+            "$ServerAttributes.SERVER_ADDRESS" { it == "somebucket.localhost" || it == "localhost" }
+            "$UrlAttributes.URL_FULL" { it == "http://somebucket.localhost:${server.httpPort()}/somekey" || it == "http://localhost:${server.httpPort()}/somebucket/somekey" }
+            "$ServerAttributes.SERVER_PORT" server.httpPort()
+            "$HttpAttributes.HTTP_REQUEST_METHOD" "GET"
+            "$RpcIncubatingAttributes.RPC_SYSTEM" "aws-api"
+            "$RpcIncubatingAttributes.RPC_SERVICE" "S3"
+            "$RpcIncubatingAttributes.RPC_METHOD" "GetObject"
             "aws.agent" "java-aws-sdk"
             "aws.bucket.name" "somebucket"
           }

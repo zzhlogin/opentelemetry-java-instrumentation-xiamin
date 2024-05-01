@@ -5,11 +5,8 @@
 
 package io.opentelemetry.instrumentation.runtimemetrics.java8.internal;
 
-import static java.util.Collections.emptyList;
-
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.instrumentation.api.internal.SemconvStability;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.ArrayList;
@@ -18,9 +15,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * Registers measurements that generate experimental metrics about CPU. These metrics will only be
- * generated the preview of stable JVM semantic conventions (e.g. by setting the {@code
- * otel.semconv-stability.opt-in} system property to {@code jvm}) is enabled.
+ * Registers measurements that generate experimental metrics about CPU.
  *
  * <p>This class is internal and is hence not for public use. Its APIs are unstable and can change
  * at any time.
@@ -41,9 +36,6 @@ public final class ExperimentalCpu {
       OperatingSystemMXBean osBean,
       @Nullable Supplier<Double> systemCpuUtilization) {
 
-    if (!SemconvStability.emitStableJvmSemconv()) {
-      return emptyList();
-    }
     Meter meter = JmxRuntimeMetricsUtil.getMeter(openTelemetry);
     List<AutoCloseable> observables = new ArrayList<>();
     observables.add(

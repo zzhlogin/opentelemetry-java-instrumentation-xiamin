@@ -18,6 +18,8 @@ import io.netty.channel.ChannelPipeline;
 import io.opentelemetry.instrumentation.api.util.VirtualField;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeInstrumentation;
 import io.opentelemetry.javaagent.extension.instrumentation.TypeTransformer;
+import java.util.Iterator;
+import java.util.Map;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -59,6 +61,9 @@ public abstract class AbstractNettyChannelPipelineInstrumentation implements Typ
             .and(takesArgument(1, String.class))
             .and(takesArguments(4)),
         AbstractNettyChannelPipelineInstrumentation.class.getName() + "$AddAfterAdvice");
+    transformer.applyAdviceToMethod(
+        isMethod().and(named("toMap")).and(takesArguments(0)).and(returns(Map.class)),
+        AbstractNettyChannelPipelineInstrumentation.class.getName() + "$ToMapAdvice");
   }
 
   @SuppressWarnings("unused")
@@ -162,16 +167,13 @@ public abstract class AbstractNettyChannelPipelineInstrumentation implements Typ
           pipeline.remove(ourHandler);
         }
         virtualField.set(handler, null);
-      } else if (handler
-          .getClass()
-          .getName()
-          .startsWith("io.opentelemetry.javaagent.instrumentation.netty.")) {
-        handler = pipeline.removeLast();
-      } else if (handler
-          .getClass()
-          .getName()
-          .startsWith("io.opentelemetry.instrumentation.netty.")) {
-        handler = pipeline.removeLast();
+      } else {
+        String handlerClassName = handler.getClass().getName();
+        if (handlerClassName.endsWith("TracingHandler")
+            && (handlerClassName.startsWith("io.opentelemetry.javaagent.instrumentation.netty.")
+                || handlerClassName.startsWith("io.opentelemetry.instrumentation.netty."))) {
+          handler = pipeline.removeLast();
+        }
       }
     }
   }
@@ -190,6 +192,25 @@ public abstract class AbstractNettyChannelPipelineInstrumentation implements Typ
         ChannelHandler ourHandler = virtualField.get(handler);
         if (ourHandler != null) {
           name = ourHandler.getClass().getName();
+        }
+      }
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public static class ToMapAdvice {
+
+    @Advice.OnMethodExit(suppress = Throwable.class)
+    public static void wrapIterator(@Advice.Return Map<String, ChannelHandler> map) {
+      VirtualField<ChannelHandler, ChannelHandler> virtualField =
+          VirtualField.find(ChannelHandler.class, ChannelHandler.class);
+      for (Iterator<ChannelHandler> iterator = map.values().iterator(); iterator.hasNext(); ) {
+        ChannelHandler handler = iterator.next();
+        String handlerClassName = handler.getClass().getName();
+        if (handlerClassName.endsWith("TracingHandler")
+            && (handlerClassName.startsWith("io.opentelemetry.javaagent.instrumentation.netty.")
+                || handlerClassName.startsWith("io.opentelemetry.instrumentation.netty."))) {
+          iterator.remove();
         }
       }
     }
