@@ -5,10 +5,11 @@ plugins {
 dependencies {
   implementation("io.opentelemetry.contrib:opentelemetry-aws-xray-propagator")
 
-  library("software.amazon.awssdk:aws-core:2.2.0")
-  library("software.amazon.awssdk:sqs:2.2.0")
-  library("software.amazon.awssdk:sns:2.2.0")
-  library("software.amazon.awssdk:aws-json-protocol:2.2.0")
+  library("software.amazon.awssdk:aws-core:2.25.38")
+  library("software.amazon.awssdk:sqs:2.25.38")
+  library("software.amazon.awssdk:sns:2.25.38")
+  library("software.amazon.awssdk:aws-json-protocol:2.25.38")
+  implementation("org.json:json:20240303")
   compileOnly(project(":muzzle")) // For @NoMuzzle
 
   testImplementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:testing"))
@@ -36,15 +37,15 @@ testing {
       dependencies {
         implementation(project())
         implementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:testing"))
-        compileOnly("software.amazon.awssdk:sqs:2.2.0")
+        compileOnly("software.amazon.awssdk:sqs:2.25.38")
         if (findProperty("testLatestDeps") as Boolean) {
           implementation("software.amazon.awssdk:aws-core:+")
           implementation("software.amazon.awssdk:aws-json-protocol:+")
           implementation("software.amazon.awssdk:dynamodb:+")
         } else {
-          implementation("software.amazon.awssdk:aws-core:2.2.0")
-          implementation("software.amazon.awssdk:aws-json-protocol:2.2.0")
-          implementation("software.amazon.awssdk:dynamodb:2.2.0")
+          implementation("software.amazon.awssdk:aws-core:2.25.38")
+          implementation("software.amazon.awssdk:aws-json-protocol:2.25.38")
+          implementation("software.amazon.awssdk:dynamodb:2.25.38")
         }
       }
     }

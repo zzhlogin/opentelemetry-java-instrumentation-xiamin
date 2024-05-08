@@ -29,6 +29,7 @@ class FieldMapper {
   }
 
   void mapToAttributes(SdkRequest sdkRequest, AwsSdkRequest request, Span span) {
+    System.out.println("mapToAttributes for SDK Req: " + sdkRequest.toString());
     mapToAttributes(
         field -> sdkRequest.getValueForField(field, Object.class).orElse(null),
         FieldMapping.Type.REQUEST,
@@ -50,9 +51,15 @@ class FieldMapper {
       AwsSdkRequest request,
       Span span) {
     for (FieldMapping fieldMapping : request.fields(type)) {
+      for ( String elem : fieldMapping.getFields() ) {
+        System.out.println("field : "+elem);
+      }
       mapToAttributes(fieldValueProvider, fieldMapping, span);
     }
     for (FieldMapping fieldMapping : request.type().fields(type)) {
+      for ( String elem : fieldMapping.getFields() ) {
+        System.out.println("type field : "+elem);
+      }
       mapToAttributes(fieldValueProvider, fieldMapping, span);
     }
   }
@@ -65,9 +72,19 @@ class FieldMapper {
     for (int i = 1; i < path.size() && target != null; i++) {
       target = next(target, path.get(i));
     }
+//    System.out.println("target2:" + target.getClass());
+    String value;
     if (target != null) {
-      String value = serializer.serialize(target);
+      if (fieldMapping.getAttribute().contains("gen_ai")) {
+        value = serializer.serialize(fieldMapping.getAttribute(), target);
+        span.setAttribute("gen_ai.system", "AWS Bedrock");
+      } else {
+        value = serializer.serialize(target);
+      }
+
       if (!StringUtils.isEmpty(value)) {
+        System.out.println("attr:" + fieldMapping.getAttribute());
+        System.out.println("val:" + value);
         span.setAttribute(fieldMapping.getAttribute(), value);
       }
     }

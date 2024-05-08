@@ -15,7 +15,8 @@ enum AwsSdkRequestType {
   S3(request("aws.bucket.name", "Bucket")),
   SQS(request("aws.queue.url", "QueueUrl"), request("aws.queue.name", "QueueName")),
   KINESIS(request("aws.stream.name", "StreamName")),
-  DYNAMODB(request("aws.table.name", "TableName"));
+  DYNAMODB(request("aws.table.name", "TableName")),
+  BEDROCKRUNTIME(request("gen_ai.request.model", "modelId"));
 
   // Wrapping in unmodifiableMap
   @SuppressWarnings("ImmutableEnumChecker")

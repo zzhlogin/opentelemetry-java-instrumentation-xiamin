@@ -5,6 +5,7 @@
 
 package io.opentelemetry.instrumentation.awssdk.v2_2;
 
+import static io.opentelemetry.instrumentation.awssdk.v2_2.AwsSdkRequestType.BEDROCKRUNTIME;
 import static io.opentelemetry.instrumentation.awssdk.v2_2.AwsSdkRequestType.DYNAMODB;
 import static io.opentelemetry.instrumentation.awssdk.v2_2.AwsSdkRequestType.KINESIS;
 import static io.opentelemetry.instrumentation.awssdk.v2_2.AwsSdkRequestType.S3;
@@ -28,6 +29,15 @@ import software.amazon.awssdk.core.SdkRequest;
 @SuppressWarnings("MemberName")
 enum AwsSdkRequest {
   // generic requests
+
+
+  BedrockRuntimeRequest(BEDROCKRUNTIME,
+      "BedrockRuntimeRequest",
+      request("gen_ai.prompt", "body"),
+      response("gen_ai.completion_text", "body"),
+      response("gen_ai.response.finish_reason", "body"),
+      response("gen_ai.usage.completion_tokens", "body"),
+      response("gen_ai.usage.prompt_tokens", "body")),
   DynamoDbRequest(DYNAMODB, "DynamoDbRequest"),
   S3Request(S3, "S3Request"),
   SqsRequest(SQS, "SqsRequest"),
@@ -134,6 +144,7 @@ enum AwsSdkRequest {
 
   @Nullable
   static AwsSdkRequest ofSdkRequest(SdkRequest request) {
+    System.out.println("ofSdkRequest:" + request.getClass().getSimpleName());
     // try request type
     AwsSdkRequest result = ofType(request.getClass().getSimpleName());
     // try parent - generic

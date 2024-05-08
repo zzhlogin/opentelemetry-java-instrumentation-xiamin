@@ -67,8 +67,8 @@ dependencies {
   implementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:library-autoconfigure"))
   implementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:library"))
 
-  library("software.amazon.awssdk:aws-core:2.2.0")
-  library("software.amazon.awssdk:sqs:2.2.0")
+  library("software.amazon.awssdk:aws-core:2.25.38")
+  library("software.amazon.awssdk:sqs:2.25.38")
 
   testImplementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:testing"))
   // Make sure these don't add HTTP headers

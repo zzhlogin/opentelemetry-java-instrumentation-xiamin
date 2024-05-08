@@ -15,7 +15,7 @@ import software.amazon.awssdk.core.interceptor.ExecutionAttributes;
 class AwsSdkExperimentalAttributesExtractor
     implements AttributesExtractor<ExecutionAttributes, Response> {
 
-  private static final String COMPONENT_NAME = "java-aws-sdk";
+  private static final String COMPONENT_NAME = "java-aws-sdk-v2";
   private static final AttributeKey<String> AWS_AGENT = AttributeKey.stringKey("aws.agent");
 
   @Override
