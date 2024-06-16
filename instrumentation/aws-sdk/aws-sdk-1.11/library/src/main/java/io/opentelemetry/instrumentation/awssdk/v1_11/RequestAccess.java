@@ -45,9 +45,72 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getStreamConsumerName(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getStreamConsumerName, request);
+  }
+
+  @Nullable
   static String getTableName(Object request) {
     RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
     return invokeOrNull(access.getTableName, request);
+  }
+
+  @Nullable
+  static String getTopicArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getTopicArn, request);
+  }
+
+  @Nullable
+  static String getTargetArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getTargetArn, request);
+  }
+
+  @Nullable
+  static String getSecretArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getSecretArn, object);
+  }
+
+  @Nullable
+  static String getResourceEventMappingId(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getResourceEventMappingId, object);
+  }
+
+  @Nullable
+  static String getFunctionName(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getFunctionName, object);
+  }
+
+  @Nullable
+  static String getStateMachineArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getStateMachineArn, object);
+  }
+
+  @Nullable
+  static String getActivityArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getActivityArn, object);
   }
 
   @Nullable
@@ -66,14 +129,30 @@ final class RequestAccess {
   @Nullable private final MethodHandle getQueueUrl;
   @Nullable private final MethodHandle getQueueName;
   @Nullable private final MethodHandle getStreamName;
+  @Nullable private final MethodHandle getStreamConsumerName;
   @Nullable private final MethodHandle getTableName;
+  @Nullable private final MethodHandle getTopicArn;
+  @Nullable private final MethodHandle getTargetArn;
+  @Nullable private final MethodHandle getSecretArn;
+  @Nullable private final MethodHandle getStateMachineArn;
+  @Nullable private final MethodHandle getActivityArn;
+  @Nullable private final MethodHandle getFunctionName;
+  @Nullable private final MethodHandle getResourceEventMappingId;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName");
     getQueueUrl = findAccessorOrNull(clz, "getQueueUrl");
     getQueueName = findAccessorOrNull(clz, "getQueueName");
     getStreamName = findAccessorOrNull(clz, "getStreamName");
+    getStreamConsumerName = findAccessorOrNull(clz, "getConsumerName");
     getTableName = findAccessorOrNull(clz, "getTableName");
+    getTopicArn = findAccessorOrNull(clz, "getTopicArn");
+    getTargetArn = findAccessorOrNull(clz, "getTargetArn");
+    getSecretArn = findAccessorOrNull(clz, "getARN");
+    getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn");
+    getActivityArn = findAccessorOrNull(clz, "getActivityArn");
+    getFunctionName = findAccessorOrNull(clz, "getFunctionName");
+    getResourceEventMappingId = findAccessorOrNull(clz, "getUUID");
   }
 
   @Nullable
