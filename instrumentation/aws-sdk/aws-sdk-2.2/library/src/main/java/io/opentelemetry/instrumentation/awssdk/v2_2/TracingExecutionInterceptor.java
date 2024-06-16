@@ -186,6 +186,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
     Span span = Span.fromContext(otelContext);
 
     try {
+      System.out.println("HERE!!!!!!!!!!!!!!!!!!!!!!!!!");
       AwsSdkRequest awsSdkRequest = AwsSdkRequest.ofSdkRequest(context.request());
       if (awsSdkRequest != null) {
         executionAttributes.putAttribute(AWS_SDK_REQUEST_ATTRIBUTE, awsSdkRequest);
@@ -308,6 +309,7 @@ final class TracingExecutionInterceptor implements ExecutionInterceptor {
       SdkRequest sdkRequest,
       ExecutionAttributes attributes) {
 
+    System.out.println("populateRequestAttributes!!!!!!!!!!!!!!!!!!!!!!!!!");
     fieldMapper.mapToAttributes(sdkRequest, awsSdkRequest, span);
 
     if (awsSdkRequest.type() == DYNAMODB) {

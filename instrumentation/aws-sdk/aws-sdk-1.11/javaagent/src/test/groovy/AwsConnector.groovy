@@ -8,6 +8,11 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
+import com.amazonaws.services.kinesis.AmazonKinesisClient
+import com.amazonaws.services.kinesis.model.CreateStreamRequest
+import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
+import com.amazonaws.services.kinesis.model.RegisterStreamConsumerResult
+import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.BucketNotificationConfiguration
 import com.amazonaws.services.s3.model.ObjectListing
@@ -37,6 +42,7 @@ class AwsConnector {
   private AmazonSQSAsyncClient sqsClient
   private AmazonS3Client s3Client
   private AmazonSNSAsyncClient snsClient
+  private AmazonKinesisClient kinesisClient
 
   static localstack() {
     AwsConnector awsConnector = new AwsConnector()
@@ -66,6 +72,11 @@ class AwsConnector {
       .withCredentials(credentialsProvider)
       .build()
 
+    awsConnector.kinesisClient = AmazonKinesisClient.builder()
+      .withEndpointConfiguration(getEndpointConfiguration(awsConnector.localstack, LocalStackContainer.Service.KINESIS))
+      .withCredentials(credentialsProvider)
+      .build()
+
     return awsConnector
   }
 
@@ -85,6 +96,10 @@ class AwsConnector {
       .build()
 
     awsConnector.snsClient = AmazonSNSAsyncClient.asyncBuilder()
+      .withRegion(Regions.US_EAST_1)
+      .build()
+
+    awsConnector.kinesisClient = AmazonKinesisClient.builder()
       .withRegion(Regions.US_EAST_1)
       .build()
 
@@ -191,6 +206,31 @@ class AwsConnector {
 
   def publishSampleNotification(String topicArn) {
     snsClient.publish(topicArn, "Hello There")
+  }
+
+  def createStream(String streamName, Integer shardCount) {
+    println "Create stream ${streamName} with ${shardCount} shards"
+    CreateStreamRequest createStreamRequest = new CreateStreamRequest()
+      .withStreamName(streamName)
+      .withShardCount(shardCount)
+    kinesisClient.createStream(createStreamRequest)
+    return kinesisClient.describeStream(streamName).getStreamDescription().getStreamARN()
+  }
+
+  def registerStreamConsumer(String streamARN, String consumerName) {
+    println "Register consumer ${consumerName} for stream ${streamARN}"
+    RegisterStreamConsumerRequest registerStreamConsumerRequest = new RegisterStreamConsumerRequest()
+      .withStreamARN(streamARN)
+      .withConsumerName(consumerName)
+    RegisterStreamConsumerResult registerStreamConsumerResult = kinesisClient.registerStreamConsumer(registerStreamConsumerRequest)
+    return registerStreamConsumerResult.getConsumer().getConsumerARN()
+  }
+
+  def describeStreamConsumer(String consumerARN) {
+    println "Describe consumer ${consumerARN}"
+    DescribeStreamConsumerRequest describeStreamConsumerRequest = new DescribeStreamConsumerRequest()
+      .withConsumerARN(consumerARN)
+    return kinesisClient.describeStreamConsumer(describeStreamConsumerRequest).getConsumerDescription()
   }
 
   def disconnect() {

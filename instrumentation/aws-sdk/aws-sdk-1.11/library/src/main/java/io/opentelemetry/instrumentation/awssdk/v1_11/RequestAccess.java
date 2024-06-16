@@ -45,6 +45,12 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getStreamConsumerArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getStreamConsumerArn, request);
+  }
+
+  @Nullable
   static String getTableName(Object request) {
     RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
     return invokeOrNull(access.getTableName, request);
@@ -66,6 +72,7 @@ final class RequestAccess {
   @Nullable private final MethodHandle getQueueUrl;
   @Nullable private final MethodHandle getQueueName;
   @Nullable private final MethodHandle getStreamName;
+  @Nullable private final MethodHandle getStreamConsumerArn;
   @Nullable private final MethodHandle getTableName;
 
   private RequestAccess(Class<?> clz) {
@@ -73,6 +80,7 @@ final class RequestAccess {
     getQueueUrl = findAccessorOrNull(clz, "getQueueUrl");
     getQueueName = findAccessorOrNull(clz, "getQueueName");
     getStreamName = findAccessorOrNull(clz, "getStreamName");
+    getStreamConsumerArn = findAccessorOrNull(clz, "getConsumerARN");
     getTableName = findAccessorOrNull(clz, "getTableName");
   }
 

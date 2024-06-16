@@ -23,6 +23,7 @@ import com.amazonaws.services.dynamodbv2.model.CreateTableRequest
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.model.DeleteStreamRequest
+import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
@@ -156,6 +157,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
+    "Kinesis"    | "DescribeStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.describeStreamConsumer(new DescribeStreamConsumerRequest().withConsumerARN("consumerARN")) } | ["aws.stream.consumer_arn": "consumerARN"] | ""
   }
 
   def "send #operation request to closed port"() {
