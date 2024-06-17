@@ -28,6 +28,8 @@ import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sns.model.PublishRequest
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
 import io.opentelemetry.semconv.SemanticAttributes
@@ -158,6 +160,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
         </DeleteOptionGroupResponse>
       """
     "Kinesis"    | "DescribeStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.describeStreamConsumer(new DescribeStreamConsumerRequest().withConsumerARN("consumerARN")) } | ["aws.stream.consumer_arn": "consumerARN"] | ""
+    "SNS"        | "Publish"                 | "POST" | "/"                   | AmazonSNSClientBuilder.standard()                            | { c -> c.publish(new PublishRequest().withTopicArn("testTopicArn").withMessage("Hello, world!")) }    | ["aws.sns.topic_arn": "testTopicArn"] | ""
   }
 
   def "send #operation request to closed port"() {

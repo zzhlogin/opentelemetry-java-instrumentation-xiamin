@@ -57,9 +57,30 @@ final class RequestAccess {
   }
 
   @Nullable
-  static String getTopicArn(Object request) {
-    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
-    return invokeOrNull(access.getTopicArn, request);
+  static String getTopicArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getTopicArn, object);
+  }
+
+  @Nullable
+  static String getSecretArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getSecretArn, object);
+  }
+
+  @Nullable
+  static String getStateMachineArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getStateMachineArn, object);
   }
 
   @Nullable
@@ -81,6 +102,8 @@ final class RequestAccess {
   @Nullable private final MethodHandle getStreamConsumerArn;
   @Nullable private final MethodHandle getTableName;
   @Nullable private final MethodHandle getTopicArn;
+  @Nullable private final MethodHandle getSecretArn;
+  @Nullable private final MethodHandle getStateMachineArn;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName");
@@ -90,6 +113,8 @@ final class RequestAccess {
     getStreamConsumerArn = findAccessorOrNull(clz, "getConsumerARN");
     getTableName = findAccessorOrNull(clz, "getTableName");
     getTopicArn = findAccessorOrNull(clz, "getTopicArn");
+    getSecretArn = findAccessorOrNull(clz, "getARN");
+    getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn");
   }
 
   @Nullable

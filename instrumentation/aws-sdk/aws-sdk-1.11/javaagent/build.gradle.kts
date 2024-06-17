@@ -47,6 +47,9 @@ dependencies {
   testLibrary("com.amazonaws:aws-java-sdk-kinesis:1.11.391")
   testLibrary("com.amazonaws:aws-java-sdk-dynamodb:1.11.106")
   testLibrary("com.amazonaws:aws-java-sdk-sns:1.11.106")
+  testLibrary("com.amazonaws:aws-java-sdk-secretsmanager:1.11.309")
+  testLibrary("com.amazonaws:aws-java-sdk-stepfunctions:1.11.230")
+  testLibrary("com.amazonaws:aws-java-sdk-iam:1.11.106")
 
   testImplementation(project(":instrumentation:aws-sdk:aws-sdk-1.11:testing"))
 
@@ -84,6 +87,9 @@ testing {
         implementation("com.amazonaws:aws-java-sdk-kinesis:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-dynamodb:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-sns:1.11.0")
+        implementation("com.amazonaws:aws-java-sdk-secretsmanager:1.11.0")
+        implementation("com.amazonaws:aws-java-sdk-stepfunctions:1.11.0")
+        implementation("com.amazonaws:aws-java-sdk-iam:1.11.0")
 
         // needed by S3
         implementation("javax.xml.bind:jaxb-api:2.3.1")
@@ -143,9 +149,11 @@ tasks {
   test {
     usesService(gradle.sharedServices.registrations["testcontainersBuildService"].service)
     filter {
-      includeTestsMatching("KinesisTracingTest")
+//      includeTestsMatching("KinesisTracingTest")
 //      includeTestsMatching("S3TracingTest")
 //      includeTestsMatching("SnsTracingTest")
+//      includeTestsMatching("SecretManagerTracingTest")
+      includeTestsMatching("StepFunctionsTracingTest")
     }
   }
 

@@ -77,8 +77,8 @@ final class AwsSdkInstrumenterFactory {
 
   private List<AttributesExtractor<Request<?>, Response<?>>> attributesExtractors() {
     return captureExperimentalSpanAttributes
-        ? defaultAttributesExtractors
-        : extendedAttributesExtractors;
+        ? extendedAttributesExtractors
+        : defaultAttributesExtractors;
   }
 
   private <REQUEST, RESPONSE> AttributesExtractor<REQUEST, RESPONSE> messagingAttributesExtractor(

@@ -15,6 +15,8 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STREAM_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_TABLE_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_TOPIC_ARN;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_SECRET_ARN;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STATE_MACHINE_ARN;
 
 import com.amazonaws.AmazonWebServiceResponse;
 import com.amazonaws.Request;
@@ -36,8 +38,6 @@ class AwsSdkExperimentalAttributesExtractor
     attributes.put(AWS_ENDPOINT, request.getEndpoint().toString());
 
     Object originalRequest = request.getOriginalRequest();
-    System.out.println("request originalRequest!!!!!!!!!!!!!!!!!!!!!!!!!");
-    System.out.println(originalRequest.getClass());
     setAttribute(attributes, AWS_BUCKET_NAME, originalRequest, RequestAccess::getBucketName);
     setAttribute(attributes, AWS_QUEUE_URL, originalRequest, RequestAccess::getQueueUrl);
     setAttribute(attributes, AWS_QUEUE_NAME, originalRequest, RequestAccess::getQueueName);
@@ -46,6 +46,8 @@ class AwsSdkExperimentalAttributesExtractor
     setAttribute(
         attributes, AWS_STREAM_CONSUMER_ARN, originalRequest, RequestAccess::getStreamConsumerArn);
     setAttribute(attributes, AWS_TOPIC_ARN, originalRequest, RequestAccess::getTopicArn);
+    setAttribute(attributes, AWS_SECRET_ARN, originalRequest, RequestAccess::getSecretArn);
+    setAttribute(attributes, AWS_STATE_MACHINE_ARN, originalRequest, RequestAccess::getStateMachineArn);
   }
 
   private static void setAttribute(
@@ -66,43 +68,23 @@ class AwsSdkExperimentalAttributesExtractor
       Request<?> request,
       @Nullable Response<?> response,
       @Nullable Throwable error) {
-    System.out.println("result onEnd!!!!!!!!!!!!!!!!!!!!!!!!!");
-    System.out.println("result response!!!!!!!!!!!!!!!!!!!!!!!!!");
-    System.out.println(response.getClass());
-    System.out.println("result awsResp!!!!!!!!!!!!!!!!!!!!!!!!!");
-    System.out.println(response.getAwsResponse());
-    System.out.println(response.getAwsResponse().getClass());
-//    sdk v1 instrumenter.end HERE !!!!!!!!!!!!!!!!!!!!!!!!!
-//        result onEnd!!!!!!!!!!!!!!!!!!!!!!!!!
-//        result response!!!!!!!!!!!!!!!!!!!!!!!!!
-//    class com.amazonaws.Response
-//    result awsResp!!!!!!!!!!!!!!!!!!!!!!!!!
-//        {ConsumerDescription: {ConsumerName: test_consumer,ConsumerARN: arn:aws:kinesis:us-east-1:007003802740:stream/test_stream/consumer/test_consumer:1717455093,ConsumerStatus: ACTIVE,ConsumerCreationTimestamp: Mon Jun 03 15:51:33 PDT 2024,StreamARN: arn:aws:kinesis:us-east-1:007003802740:stream/test_stream}}
-//    class com.amazonaws.services.kinesis.model.DescribeStreamConsumerResult
-
-    Object awsResps = response.getAwsResponse();
-    System.out.println("awsResp instanceof AmazonWebServiceResponse!!!!!!!!!!!!!!!!!!!!!!!!!");
-    System.out.println(awsResps instanceof AmazonWebServiceResponse);
-    System.out.println(awsResps != null);
-    setAttribute(attributes, AWS_TOPIC_ARN, awsResps, RequestAccess::getTopicArn);
-    System.out.println("result attributes!!!!!!!!!!!!!!!!!!!!!!!!!");
-    attributes.build().forEach((key, value) -> System.out.println(key.getKey() + ": " + value));
-
-    if (awsResps instanceof AmazonWebServiceResponse) {
-      AmazonWebServiceResponse<?> awsResp = (AmazonWebServiceResponse<?>) awsResps;
-      System.out.println("result AmazonWebServiceResponse!!!!!!!!!!!!!!!!!!!!!!!!!");
-      String requestId = awsResp.getRequestId();
-      System.out.println("result requestId!!!!!!!!!!!!!!!!!!!!!!!!!");
-      System.out.println(requestId);
-      Object result = awsResp.getResult();
-      System.out.println("result outside!!!!!!!!!!!!!!!!!!!!!!!!!");
-      if (result != null) {
-        System.out.println("result!!!!!!!!!!!!!!!!!!!!!!!!!");
-        System.out.println("Result class type: " + result.getClass());
-//        System.out.println(result);
-      }
-      if (requestId != null) {
-        attributes.put(AWS_REQUEST_ID, requestId);
+    if (response != null) {
+      Object awsResps = response.getAwsResponse();
+      System.out.println("awsResps.getClass()!!!!!!!!!!!!!!!!!!!!!!!!!");
+      System.out.println(awsResps.getClass());
+  //    System.out.println(awsResps instanceof AmazonWebServiceResponse);
+  //    System.out.println(awsResps != null);
+      setAttribute(attributes, AWS_TOPIC_ARN, awsResps, RequestAccess::getTopicArn);
+      setAttribute(attributes, AWS_SECRET_ARN, awsResps, RequestAccess::getSecretArn);
+      setAttribute(attributes, AWS_STATE_MACHINE_ARN, awsResps, RequestAccess::getStateMachineArn);
+      System.out.println("result attributes!!!!!!!!!!!!!!!!!!!!!!!!!");
+      attributes.build().forEach((key, value) -> System.out.println(key.getKey() + ": " + value));
+      if (awsResps instanceof AmazonWebServiceResponse) {
+        AmazonWebServiceResponse<?> awsResp = (AmazonWebServiceResponse<?>) awsResps;
+        String requestId = awsResp.getRequestId();
+        if (requestId != null) {
+          attributes.put(AWS_REQUEST_ID, requestId);
+        }
       }
     }
   }
