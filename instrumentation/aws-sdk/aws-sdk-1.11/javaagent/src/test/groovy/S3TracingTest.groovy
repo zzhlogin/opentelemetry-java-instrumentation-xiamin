@@ -53,6 +53,10 @@ class S3TracingTest extends AgentInstrumentationSpecification {
           name "SQS.CreateQueue"
           kind CLIENT
           hasNoParent()
+          println("   attributes SQS.CreateQueue line 56!!!!!!!!!!")
+          span.attributes.each { attribute ->
+            println("      ${attribute}")
+          }
           attributes {
             "aws.agent" "java-aws-sdk"
             "aws.endpoint" String
@@ -444,6 +448,7 @@ class S3TracingTest extends AgentInstrumentationSpecification {
             "net.peer.port" { it == null || Number }
             "$SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH" { it == null || it instanceof Long }
             "$SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH" { it == null || it instanceof Long }
+            "aws.sns.topic_arn" topicArn
           }
         }
       }
@@ -467,6 +472,7 @@ class S3TracingTest extends AgentInstrumentationSpecification {
             "net.peer.port" { it == null || Number }
             "$SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH" { it == null || it instanceof Long }
             "$SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH" { it == null || it instanceof Long }
+            "aws.sns.topic_arn" topicArn
           }
         }
       }
@@ -514,6 +520,7 @@ class S3TracingTest extends AgentInstrumentationSpecification {
             "net.peer.port" { it == null || Number }
             "$SemanticAttributes.HTTP_REQUEST_CONTENT_LENGTH" { it == null || it instanceof Long }
             "$SemanticAttributes.HTTP_RESPONSE_CONTENT_LENGTH" { it == null || it instanceof Long }
+            "aws.sns.topic_arn" topicArn
           }
         }
       }

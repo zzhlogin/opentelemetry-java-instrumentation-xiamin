@@ -57,6 +57,12 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getTopicArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getTopicArn, request);
+  }
+
+  @Nullable
   private static String invokeOrNull(@Nullable MethodHandle method, Object obj) {
     if (method == null) {
       return null;
@@ -74,6 +80,7 @@ final class RequestAccess {
   @Nullable private final MethodHandle getStreamName;
   @Nullable private final MethodHandle getStreamConsumerArn;
   @Nullable private final MethodHandle getTableName;
+  @Nullable private final MethodHandle getTopicArn;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName");
@@ -82,6 +89,7 @@ final class RequestAccess {
     getStreamName = findAccessorOrNull(clz, "getStreamName");
     getStreamConsumerArn = findAccessorOrNull(clz, "getConsumerARN");
     getTableName = findAccessorOrNull(clz, "getTableName");
+    getTopicArn = findAccessorOrNull(clz, "getTopicArn");
   }
 
   @Nullable

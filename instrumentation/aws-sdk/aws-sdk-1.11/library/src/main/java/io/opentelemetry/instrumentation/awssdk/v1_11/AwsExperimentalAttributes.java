@@ -18,6 +18,7 @@ final class AwsExperimentalAttributes {
   static final AttributeKey<String> AWS_STREAM_NAME = stringKey("aws.stream.name");
   static final AttributeKey<String> AWS_STREAM_CONSUMER_ARN = stringKey("aws.kinesis.consumer_arn");
   static final AttributeKey<String> AWS_TABLE_NAME = stringKey("aws.table.name");
+  static final AttributeKey<String> AWS_TOPIC_ARN = stringKey("aws.sns.topic_arn");
   static final AttributeKey<String> AWS_REQUEST_ID = stringKey("aws.requestId");
 
   private AwsExperimentalAttributes() {}

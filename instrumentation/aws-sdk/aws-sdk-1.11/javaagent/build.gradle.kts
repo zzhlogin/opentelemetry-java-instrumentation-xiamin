@@ -144,6 +144,8 @@ tasks {
     usesService(gradle.sharedServices.registrations["testcontainersBuildService"].service)
     filter {
       includeTestsMatching("KinesisTracingTest")
+//      includeTestsMatching("S3TracingTest")
+//      includeTestsMatching("SnsTracingTest")
     }
   }
 
