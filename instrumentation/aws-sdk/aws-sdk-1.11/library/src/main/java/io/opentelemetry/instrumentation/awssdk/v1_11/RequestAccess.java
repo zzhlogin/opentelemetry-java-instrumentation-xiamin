@@ -45,9 +45,9 @@ final class RequestAccess {
   }
 
   @Nullable
-  static String getStreamConsumerArn(Object request) {
+  static String getStreamConsumerName(Object request) {
     RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
-    return invokeOrNull(access.getStreamConsumerArn, request);
+    return invokeOrNull(access.getStreamConsumerName, request);
   }
 
   @Nullable
@@ -84,6 +84,15 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getActivityArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getActivityArn, object);
+  }
+
+  @Nullable
   private static String invokeOrNull(@Nullable MethodHandle method, Object obj) {
     if (method == null) {
       return null;
@@ -99,22 +108,24 @@ final class RequestAccess {
   @Nullable private final MethodHandle getQueueUrl;
   @Nullable private final MethodHandle getQueueName;
   @Nullable private final MethodHandle getStreamName;
-  @Nullable private final MethodHandle getStreamConsumerArn;
+  @Nullable private final MethodHandle getStreamConsumerName;
   @Nullable private final MethodHandle getTableName;
   @Nullable private final MethodHandle getTopicArn;
   @Nullable private final MethodHandle getSecretArn;
   @Nullable private final MethodHandle getStateMachineArn;
+  @Nullable private final MethodHandle getActivityArn;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName");
     getQueueUrl = findAccessorOrNull(clz, "getQueueUrl");
     getQueueName = findAccessorOrNull(clz, "getQueueName");
     getStreamName = findAccessorOrNull(clz, "getStreamName");
-    getStreamConsumerArn = findAccessorOrNull(clz, "getConsumerARN");
+    getStreamConsumerName = findAccessorOrNull(clz, "getConsumerName");
     getTableName = findAccessorOrNull(clz, "getTableName");
     getTopicArn = findAccessorOrNull(clz, "getTopicArn");
     getSecretArn = findAccessorOrNull(clz, "getARN");
     getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn");
+    getActivityArn = findAccessorOrNull(clz, "getActivityArn");
   }
 
   @Nullable

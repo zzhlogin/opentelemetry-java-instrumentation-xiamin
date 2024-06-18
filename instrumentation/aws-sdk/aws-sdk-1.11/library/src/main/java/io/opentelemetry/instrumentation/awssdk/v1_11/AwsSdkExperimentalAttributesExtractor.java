@@ -11,12 +11,13 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_QUEUE_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_QUEUE_URL;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_REQUEST_ID;
-import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STREAM_CONSUMER_ARN;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STREAM_CONSUMER_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STREAM_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_TABLE_NAME;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_TOPIC_ARN;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_SECRET_ARN;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STATE_MACHINE_ARN;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_ACTIVITY_ARN;
 
 import com.amazonaws.AmazonWebServiceResponse;
 import com.amazonaws.Request;
@@ -44,10 +45,11 @@ class AwsSdkExperimentalAttributesExtractor
     setAttribute(attributes, AWS_STREAM_NAME, originalRequest, RequestAccess::getStreamName);
     setAttribute(attributes, AWS_TABLE_NAME, originalRequest, RequestAccess::getTableName);
     setAttribute(
-        attributes, AWS_STREAM_CONSUMER_ARN, originalRequest, RequestAccess::getStreamConsumerArn);
+        attributes, AWS_STREAM_CONSUMER_NAME, originalRequest, RequestAccess::getStreamConsumerName);
     setAttribute(attributes, AWS_TOPIC_ARN, originalRequest, RequestAccess::getTopicArn);
     setAttribute(attributes, AWS_SECRET_ARN, originalRequest, RequestAccess::getSecretArn);
     setAttribute(attributes, AWS_STATE_MACHINE_ARN, originalRequest, RequestAccess::getStateMachineArn);
+    setAttribute(attributes, AWS_ACTIVITY_ARN, originalRequest, RequestAccess::getActivityArn);
   }
 
   private static void setAttribute(
@@ -70,13 +72,16 @@ class AwsSdkExperimentalAttributesExtractor
       @Nullable Throwable error) {
     if (response != null) {
       Object awsResps = response.getAwsResponse();
-      System.out.println("awsResps.getClass()!!!!!!!!!!!!!!!!!!!!!!!!!");
-      System.out.println(awsResps.getClass());
+      if (awsResps != null) {
+        System.out.println("awsResps.getClass()!!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println(awsResps.getClass());
+      }
   //    System.out.println(awsResps instanceof AmazonWebServiceResponse);
   //    System.out.println(awsResps != null);
       setAttribute(attributes, AWS_TOPIC_ARN, awsResps, RequestAccess::getTopicArn);
       setAttribute(attributes, AWS_SECRET_ARN, awsResps, RequestAccess::getSecretArn);
       setAttribute(attributes, AWS_STATE_MACHINE_ARN, awsResps, RequestAccess::getStateMachineArn);
+      setAttribute(attributes, AWS_ACTIVITY_ARN, awsResps, RequestAccess::getActivityArn);
       System.out.println("result attributes!!!!!!!!!!!!!!!!!!!!!!!!!");
       attributes.build().forEach((key, value) -> System.out.println(key.getKey() + ": " + value));
       if (awsResps instanceof AmazonWebServiceResponse) {

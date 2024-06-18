@@ -271,13 +271,6 @@ class AwsConnector {
     return registerStreamConsumerResult.getConsumer().getConsumerARN()
   }
 
-  def describeStreamConsumer(String consumerARN) {
-    println "Describe consumer ${consumerARN}"
-    DescribeStreamConsumerRequest describeStreamConsumerRequest = new DescribeStreamConsumerRequest()
-      .withConsumerARN(consumerARN)
-    return kinesisClient.describeStreamConsumer(describeStreamConsumerRequest).getConsumerDescription()
-  }
-
   def createSecret(String secretName, String secretValue) {
     println "Create secret ${secretName}"
     CreateSecretRequest createSecretRequest = new CreateSecretRequest()

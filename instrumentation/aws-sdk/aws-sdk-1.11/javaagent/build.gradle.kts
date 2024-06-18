@@ -148,13 +148,13 @@ tasks {
 
   test {
     usesService(gradle.sharedServices.registrations["testcontainersBuildService"].service)
-    filter {
-//      includeTestsMatching("KinesisTracingTest")
-//      includeTestsMatching("S3TracingTest")
-//      includeTestsMatching("SnsTracingTest")
-//      includeTestsMatching("SecretManagerTracingTest")
-      includeTestsMatching("StepFunctionsTracingTest")
-    }
+//    filter {
+////      includeTestsMatching("KinesisTracingTest")
+////      includeTestsMatching("S3TracingTest")
+////      includeTestsMatching("SnsTracingTest")
+////      includeTestsMatching("SecretManagerTracingTest")
+//      includeTestsMatching("StepFunctionsTracingTest")
+//    }
   }
 
   withType<Test>().configureEach {

@@ -24,12 +24,20 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.model.DeleteStreamRequest
 import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
+import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sns.model.CreateTopicRequest
 import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.sns.model.SubscribeRequest
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
+import com.amazonaws.services.secretsmanager.model.DescribeSecretRequest
+import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
+import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder
+
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
 import io.opentelemetry.semconv.SemanticAttributes
@@ -104,6 +112,11 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           name "$service.$operation"
           kind operation == "SendMessage" ? PRODUCER : CLIENT
           hasNoParent()
+          println("   attributes Abstract!!!!!!!!!!")
+          println("$service.$operation")
+          span.attributes.each { attribute ->
+            println("      ${attribute}")
+          }
           attributes {
             "$SemanticAttributes.HTTP_URL" "${server.httpUri()}"
             "$SemanticAttributes.HTTP_METHOD" "$method"
@@ -159,8 +172,19 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
-    "Kinesis"    | "DescribeStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.describeStreamConsumer(new DescribeStreamConsumerRequest().withConsumerARN("consumerARN")) } | ["aws.stream.consumer_arn": "consumerARN"] | ""
-    "SNS"        | "Publish"                 | "POST" | "/"                   | AmazonSNSClientBuilder.standard()                            | { c -> c.publish(new PublishRequest().withTopicArn("testTopicArn").withMessage("Hello, world!")) }    | ["aws.sns.topic_arn": "testTopicArn"] | ""
+    "Kinesis"    | "RegisterStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.registerStreamConsumer(new RegisterStreamConsumerRequest().withStreamARN("streamARN").withConsumerName("consumerName")) } | ["aws.kinesis.consumer_name": "consumerName"] | ""
+    "SNS"        | "Publish"           | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | AmazonSNSClientBuilder.standard()                 | { c -> c.publish(new PublishRequest().withMessage("somemessage").withTopicArn("somearn")) } | ["aws.sns.topic_arn": "somearn"] | """
+          <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+              <PublishResult>
+                  <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+              </PublishResult>
+              <ResponseMetadata>
+                  <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+              </ResponseMetadata>
+          </PublishResponse>
+      """
+    "SecretsManager"    | "CreateSecret"  | "POST" | "/"                   | AWSSecretsManagerClientBuilder.standard()                        | { c -> c.describeSecret(new DescribeSecretRequest().withSecretId("secreteARN")) } | ["aws.secretsmanager.secret_arn": "secreteARN"] | ""
+    "StepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
   }
 
   def "send #operation request to closed port"() {

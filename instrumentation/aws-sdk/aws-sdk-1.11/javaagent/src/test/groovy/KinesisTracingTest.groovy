@@ -29,14 +29,11 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
     // Register a consumer
     String consumerARN = awsConnector.registerStreamConsumer(streamARN, consumerName)
 
-    // Describe the stream consumer
-    def consumerDescription = awsConnector.describeStreamConsumer(consumerARN)
-
     when:
-    consumerDescription != null
+    consumerARN != null
 
     then:
-    assertTraces(4) {
+    assertTraces(3) {
       trace(0, 1) {
         span(0) {
           name "Kinesis.CreateStream"
@@ -65,6 +62,10 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
           name "Kinesis.DescribeStream"
           kind CLIENT
           hasNoParent()
+          println("   attributes DescribeStream!!!!!!!!!!")
+          span.attributes.each { attribute ->
+            println("      ${attribute}")
+          }
           attributes {
             "aws.agent" "java-aws-sdk"
             "aws.endpoint" String
@@ -98,33 +99,7 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
             "rpc.method" "RegisterStreamConsumer"
             "rpc.system" "aws-api"
             "rpc.service" "AmazonKinesis"
-            "http.method" "POST"
-            "http.response_content_length" { it == null || Number }
-            "http.status_code" 200
-            "http.url" String
-            "net.peer.name" String
-            "net.peer.port" { it == null || Number }
-            "net.protocol.name" String
-            "net.protocol.version" String
-          }
-        }
-      }
-      trace(3, 1) {
-        span(0) {
-          name "Kinesis.DescribeStreamConsumer"
-          kind CLIENT
-          hasNoParent()
-          println("   attributes DescribeStreamConsumer!!!!!!!!!!")
-          span.attributes.each { attribute ->
-            println("      ${attribute}")
-          }
-          attributes {
-            "aws.agent" "java-aws-sdk"
-            "aws.endpoint" String
-            "rpc.method" "DescribeStreamConsumer"
-            "aws.kinesis.consumer_arn" consumerARN
-            "rpc.system" "aws-api"
-            "rpc.service" "AmazonKinesis"
+            "aws.kinesis.consumer_name" consumerName
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
             "http.status_code" 200
