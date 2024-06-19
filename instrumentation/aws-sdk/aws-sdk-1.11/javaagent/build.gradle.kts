@@ -50,6 +50,7 @@ dependencies {
   testLibrary("com.amazonaws:aws-java-sdk-secretsmanager:1.11.309")
   testLibrary("com.amazonaws:aws-java-sdk-stepfunctions:1.11.230")
   testLibrary("com.amazonaws:aws-java-sdk-iam:1.11.106")
+  testLibrary("com.amazonaws:aws-java-sdk-lambda:1.11.678")
 
   testImplementation(project(":instrumentation:aws-sdk:aws-sdk-1.11:testing"))
 
@@ -89,6 +90,7 @@ testing {
         implementation("com.amazonaws:aws-java-sdk-sns:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-secretsmanager:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-stepfunctions:1.11.0")
+        implementation("com.amazonaws:aws-java-sdk-lambda:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-iam:1.11.0")
 
         // needed by S3
@@ -154,6 +156,7 @@ tasks {
 ////      includeTestsMatching("SnsTracingTest")
 ////      includeTestsMatching("SecretManagerTracingTest")
 //      includeTestsMatching("StepFunctionsTracingTest")
+//      includeTestsMatching("LambdaTracingTest")
 //    }
   }
 

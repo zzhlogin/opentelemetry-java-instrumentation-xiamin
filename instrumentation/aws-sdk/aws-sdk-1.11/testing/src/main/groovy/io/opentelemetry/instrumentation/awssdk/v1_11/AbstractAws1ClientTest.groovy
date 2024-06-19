@@ -34,7 +34,7 @@ import com.amazonaws.services.sns.model.CreateTopicRequest
 import com.amazonaws.services.sns.model.PublishRequest
 import com.amazonaws.services.sns.model.SubscribeRequest
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
-import com.amazonaws.services.secretsmanager.model.DescribeSecretRequest
+import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
 import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder
 
@@ -94,11 +94,17 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
   @Unroll
   def "send #operation request with mocked response"() {
     setup:
+    println("HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body)")
+    println(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
+    println("successed")
     server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
 
     when:
     def client = configureClient(clientBuilder).withEndpointConfiguration(endpoint).withCredentials(credentialsProvider).build()
     def response = call.call(client)
+
+    println("   response!!!!!!!!!!")
+    println(response)
 
     then:
     response != null
@@ -172,7 +178,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
-    "Kinesis"    | "RegisterStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.registerStreamConsumer(new RegisterStreamConsumerRequest().withStreamARN("streamARN").withConsumerName("consumerName")) } | ["aws.kinesis.consumer_name": "consumerName"] | ""
+    "Kinesis"    | "RegisterStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.registerStreamConsumer(new RegisterStreamConsumerRequest().withStreamARN("streamARN").withConsumerName("consumerName")) } | ["aws.stream.consumer_name": "consumerName"] | ""
     "SNS"        | "Publish"           | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | AmazonSNSClientBuilder.standard()                 | { c -> c.publish(new PublishRequest().withMessage("somemessage").withTopicArn("somearn")) } | ["aws.sns.topic_arn": "somearn"] | """
           <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
               <PublishResult>
@@ -183,8 +189,14 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
               </ResponseMetadata>
           </PublishResponse>
       """
-    "SecretsManager"    | "CreateSecret"  | "POST" | "/"                   | AWSSecretsManagerClientBuilder.standard()                        | { c -> c.describeSecret(new DescribeSecretRequest().withSecretId("secreteARN")) } | ["aws.secretsmanager.secret_arn": "secreteARN"] | ""
-    "StepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
+    "AWSSecretsManager"    | "CreateSecret"  | "POST" | "/"                   | AWSSecretsManagerClientBuilder.standard()                        | { c -> c.createSecret(new CreateSecretRequest().withName("secretName").withSecretString("secretValue")) } | ["aws.secretsmanager.secret_arn": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3"] | """
+          {
+            "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3",
+            "Name":"MyTestDatabaseSecret",
+            "VersionId": "EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
+          }
+      """
+    "AWSStepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
   }
 
   def "send #operation request to closed port"() {

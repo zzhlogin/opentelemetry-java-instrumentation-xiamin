@@ -39,6 +39,10 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
           name "Kinesis.CreateStream"
           kind CLIENT
           hasNoParent()
+          println("   attributes RegisterStreamConsumer!!!!!!!!!!")
+          span.attributes.each { attribute ->
+            println("      ${attribute}")
+          }
           attributes {
             "aws.agent" "java-aws-sdk"
             "aws.endpoint" String
@@ -48,6 +52,7 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AmazonKinesis"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String
@@ -75,6 +80,7 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AmazonKinesis"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String
@@ -99,9 +105,10 @@ class KinesisTracingTest extends AgentInstrumentationSpecification {
             "rpc.method" "RegisterStreamConsumer"
             "rpc.system" "aws-api"
             "rpc.service" "AmazonKinesis"
-            "aws.kinesis.consumer_name" consumerName
+            "aws.stream.consumer_name" consumerName
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String

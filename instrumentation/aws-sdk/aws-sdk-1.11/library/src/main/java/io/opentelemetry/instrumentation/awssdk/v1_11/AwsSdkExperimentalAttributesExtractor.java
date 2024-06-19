@@ -18,6 +18,8 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_SECRET_ARN;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_STATE_MACHINE_ARN;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_ACTIVITY_ARN;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_LAMBDA_FUNCTION_NAME;
+import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_LAMBDA_SOURCE_MAPPING_ID;
 
 import com.amazonaws.AmazonWebServiceResponse;
 import com.amazonaws.Request;
@@ -50,6 +52,8 @@ class AwsSdkExperimentalAttributesExtractor
     setAttribute(attributes, AWS_SECRET_ARN, originalRequest, RequestAccess::getSecretArn);
     setAttribute(attributes, AWS_STATE_MACHINE_ARN, originalRequest, RequestAccess::getStateMachineArn);
     setAttribute(attributes, AWS_ACTIVITY_ARN, originalRequest, RequestAccess::getActivityArn);
+    setAttribute(attributes, AWS_LAMBDA_FUNCTION_NAME, originalRequest, RequestAccess::getFunctionName);
+    setAttribute(attributes, AWS_LAMBDA_SOURCE_MAPPING_ID, originalRequest, RequestAccess::getResourceEventMappingId);
   }
 
   private static void setAttribute(
@@ -82,6 +86,8 @@ class AwsSdkExperimentalAttributesExtractor
       setAttribute(attributes, AWS_SECRET_ARN, awsResps, RequestAccess::getSecretArn);
       setAttribute(attributes, AWS_STATE_MACHINE_ARN, awsResps, RequestAccess::getStateMachineArn);
       setAttribute(attributes, AWS_ACTIVITY_ARN, awsResps, RequestAccess::getActivityArn);
+      setAttribute(attributes, AWS_LAMBDA_FUNCTION_NAME, awsResps, RequestAccess::getFunctionName);
+      setAttribute(attributes, AWS_LAMBDA_SOURCE_MAPPING_ID, awsResps, RequestAccess::getResourceEventMappingId);
       System.out.println("result attributes!!!!!!!!!!!!!!!!!!!!!!!!!");
       attributes.build().forEach((key, value) -> System.out.println(key.getKey() + ": " + value));
       if (awsResps instanceof AmazonWebServiceResponse) {

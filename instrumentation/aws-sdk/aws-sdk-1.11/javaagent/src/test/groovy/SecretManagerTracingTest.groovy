@@ -51,6 +51,7 @@ class SecretManagerTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AWSSecretsManager"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String
@@ -78,6 +79,7 @@ class SecretManagerTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AWSSecretsManager"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String

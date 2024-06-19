@@ -75,6 +75,24 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getResourceEventMappingId(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getResourceEventMappingId, object);
+  }
+
+  @Nullable
+  static String getFunctionName(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getFunctionName, object);
+  }
+
+  @Nullable
   static String getStateMachineArn(Object object) {
     if (object == null) {
       return null;
@@ -114,6 +132,8 @@ final class RequestAccess {
   @Nullable private final MethodHandle getSecretArn;
   @Nullable private final MethodHandle getStateMachineArn;
   @Nullable private final MethodHandle getActivityArn;
+  @Nullable private final MethodHandle getFunctionName;
+  @Nullable private final MethodHandle getResourceEventMappingId;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName");
@@ -126,6 +146,8 @@ final class RequestAccess {
     getSecretArn = findAccessorOrNull(clz, "getARN");
     getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn");
     getActivityArn = findAccessorOrNull(clz, "getActivityArn");
+    getFunctionName = findAccessorOrNull(clz, "getFunctionName");
+    getResourceEventMappingId = findAccessorOrNull(clz, "getUUID");
   }
 
   @Nullable

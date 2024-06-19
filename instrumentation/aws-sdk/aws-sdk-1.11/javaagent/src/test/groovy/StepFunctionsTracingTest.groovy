@@ -136,6 +136,7 @@ class StepFunctionsTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AWSStepFunctions"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String
@@ -163,6 +164,7 @@ class StepFunctionsTracingTest extends AgentInstrumentationSpecification {
             "rpc.service" "AWSStepFunctions"
             "http.method" "POST"
             "http.response_content_length" { it == null || Number }
+            "http.request_content_length" { it == null || Number }
             "http.status_code" 200
             "http.url" String
             "net.peer.name" String
