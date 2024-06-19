@@ -36,7 +36,12 @@ import com.amazonaws.services.sns.model.SubscribeRequest
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
 import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
+import com.amazonaws.services.stepfunctions.model.GetActivityTaskRequest
 import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder
+import com.amazonaws.services.lambda.model.GetEventSourceMappingRequest
+import com.amazonaws.services.lambda.model.GetFunctionRequest
+
 
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
@@ -197,13 +202,9 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           }
       """
     "AWSStepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
-    "AWSLambda"    | "CreateEventSourceMapping"  | "POST" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.createEventSourceMapping(new CreateEventSourceMapping().withName("secretName").withSecretString("secretValue")) } | ["aws.secretsmanager.secret_arn": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3"] | """
-          {
-            "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3",
-            "Name":"MyTestDatabaseSecret",
-            "VersionId": "EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
-          }
-      """
+    "AWSStepFunctions"    | "GetActivityTask"     | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.getActivityTask(new GetActivityTaskRequest().withActivityArn("activityArn")) }      | ["aws.stepfunctions.activity_arn": "activityArn"] | ""
+    "AWSLambda"    | "GetEventSourceMapping"  | "GET" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.getEventSourceMapping(new GetEventSourceMappingRequest().withUUID("uuid")) } | ["aws.lambda.resource_mapping_id": "uuid"]   | ""
+    "AWSLambda"    | "GetFunction"            | "GET" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.getFunction(new GetFunctionRequest().withFunctionName("functionName")) }           | ["aws.lambda.function_name": "functionName"] | ""
   }
 
   def "send #operation request to closed port"() {

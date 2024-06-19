@@ -37,11 +37,23 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
 import com.amazonaws.services.identitymanagement.model.CreateRoleRequest
 import com.amazonaws.services.identitymanagement.model.CreateRoleResult
 import com.amazonaws.services.identitymanagement.model.AttachRolePolicyRequest
+import com.amazonaws.services.identitymanagement.model.PutRolePolicyRequest
 import com.amazonaws.services.stepfunctions.AWSStepFunctionsClient
 import com.amazonaws.services.stepfunctions.model.CreateStateMachineRequest
 import com.amazonaws.services.stepfunctions.model.CreateStateMachineResult
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineResult
+import com.amazonaws.services.lambda.AWSLambdaClient
+import com.amazonaws.services.lambda.model.CreateFunctionRequest
+import com.amazonaws.services.lambda.model.CreateFunctionResult
+import com.amazonaws.services.lambda.model.CreateEventSourceMappingRequest
+import com.amazonaws.services.lambda.model.CreateEventSourceMappingResult
+import com.amazonaws.services.lambda.model.GetFunctionRequest
+import com.amazonaws.services.lambda.model.GetFunctionResult
+import com.amazonaws.services.lambda.model.GetEventSourceMappingRequest
+import com.amazonaws.services.lambda.model.GetEventSourceMappingResult
+import com.amazonaws.services.lambda.model.FunctionCode
+import com.amazonaws.services.lambda.model.Runtime
 
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.localstack.LocalStackContainer
@@ -49,6 +61,10 @@ import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.utility.DockerImageName
 
 import java.time.Duration
+import java.nio.ByteBuffer
+import java.io.ByteArrayOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 class AwsConnector {
 
@@ -61,6 +77,7 @@ class AwsConnector {
   private AWSSecretsManagerClient secretsManagerClient
   private AWSStepFunctionsClient stepFunctionsClient
   private AmazonIdentityManagementClient iamClient
+  private AWSLambdaClient lambdaClient
 
   static localstack() {
     AwsConnector awsConnector = new AwsConnector()
@@ -110,6 +127,11 @@ class AwsConnector {
       .withCredentials(credentialsProvider)
       .build()
 
+    awsConnector.lambdaClient = AWSLambdaClient.builder()
+      .withEndpointConfiguration(getEndpointConfiguration(awsConnector.localstack, LocalStackContainer.Service.LAMBDA))
+      .withCredentials(credentialsProvider)
+      .build()
+
     return awsConnector
   }
 
@@ -145,6 +167,10 @@ class AwsConnector {
       .build()
 
     awsConnector.iamClient = AmazonIdentityManagementClient.standard()
+      .withRegion(Regions.US_EAST_1)
+      .build()
+
+    awsConnector.lambdaClient = AWSLambdaClient.standard()
       .withRegion(Regions.US_EAST_1)
       .build()
 
@@ -305,6 +331,15 @@ class AwsConnector {
     iamClient.attachRolePolicy(attachRolePolicyRequest)
   }
 
+  def putRolePolicy(String roleName, String policyName, String policyDocument) {
+    println "Put policy ${policyName} for role ${roleName}"
+    PutRolePolicyRequest putRolePolicyRequest = new PutRolePolicyRequest()
+      .withRoleName(roleName)
+      .withPolicyName(policyName)
+      .withPolicyDocument(policyDocument)
+    iamClient.putRolePolicy(putRolePolicyRequest)
+  }
+
   def createStateMachine(String stateMachineName, String stateMachineDefinition, String stateMachineRoleArn) {
     println "Create state machine ${stateMachineName}"
     CreateStateMachineRequest createStateMachineRequest = new CreateStateMachineRequest()
@@ -321,6 +356,62 @@ class AwsConnector {
       .withStateMachineArn(stateMachineArn)
     DescribeStateMachineResult describeStateMachineResult = stepFunctionsClient.describeStateMachine(describeStateMachineRequest)
     return describeStateMachineResult
+  }
+
+  def createFunction(String functionName, String roleArn, String handler) {
+    println "Create function ${functionName}"
+    String lambdaFunctionCode = """
+            def lambda_handler(event, context):
+                print("Received event: " + str(event))
+                return {
+                    'statusCode': 200,
+                    'body': 'Hello from Lambda!'
+                }
+            """
+
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream()
+    ZipOutputStream zos = new ZipOutputStream(baos)
+    ZipEntry entry = new ZipEntry("lambda_function.py")
+    zos.putNextEntry(entry)
+    zos.write(lambdaFunctionCode.getBytes())
+    zos.closeEntry()
+    zos.close()
+    byte[] zipFileBytes = baos.toByteArray()
+
+    CreateFunctionRequest createFunctionRequest = new CreateFunctionRequest()
+      .withFunctionName(functionName)
+      .withRuntime(Runtime.Python38)
+      .withRole(roleArn)
+      .withHandler(handler)
+      .withCode(new FunctionCode().withZipFile(ByteBuffer.wrap(zipFileBytes)))
+    CreateFunctionResult createFunctionResult = lambdaClient.createFunction(createFunctionRequest)
+    return createFunctionResult.getFunctionArn()
+  }
+
+  def createEventSourceMapping(String functionName, String eventSourceArn) {
+    println "Create event source mapping for function ${functionName}"
+    CreateEventSourceMappingRequest createEventSourceMappingRequest = new CreateEventSourceMappingRequest()
+      .withFunctionName(functionName)
+      .withEventSourceArn(eventSourceArn)
+    CreateEventSourceMappingResult createEventSourceMappingResult = lambdaClient.createEventSourceMapping(createEventSourceMappingRequest)
+    return createEventSourceMappingResult.getUUID()
+  }
+
+  def getFunction(String functionName) {
+    println "Get function ${functionName}"
+    GetFunctionRequest getFunctionRequest = new GetFunctionRequest()
+      .withFunctionName(functionName)
+    GetFunctionResult getFunctionResult = lambdaClient.getFunction(getFunctionRequest)
+    return getFunctionResult.getConfiguration()
+  }
+
+  def getEventSourceMapping(String uuid) {
+    println "Get event source mapping ${uuid}"
+    GetEventSourceMappingRequest getEventSourceMappingRequest = new GetEventSourceMappingRequest()
+      .withUUID(uuid)
+    GetEventSourceMappingResult getEventSourceMappingResult = lambdaClient.getEventSourceMapping(getEventSourceMappingRequest)
+    return getEventSourceMappingResult
   }
 
   def disconnect() {
