@@ -197,6 +197,13 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           }
       """
     "AWSStepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
+    "AWSLambda"    | "CreateEventSourceMapping"  | "POST" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.createEventSourceMapping(new CreateEventSourceMapping().withName("secretName").withSecretString("secretValue")) } | ["aws.secretsmanager.secret_arn": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3"] | """
+          {
+            "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3",
+            "Name":"MyTestDatabaseSecret",
+            "VersionId": "EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
+          }
+      """
   }
 
   def "send #operation request to closed port"() {
