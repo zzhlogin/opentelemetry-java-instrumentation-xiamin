@@ -1,27 +1,33 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package io.opentelemetry.instrumentation.awssdk.v1_11;
-
-import com.amazonaws.AmazonWebServiceRequest;
-import com.amazonaws.Request;
-import io.opentelemetry.api.common.AttributesBuilder;
-import io.opentelemetry.context.Context;
-import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
-
-import org.json.JSONObject;
 
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_FINISH_REASONS;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_RUNTIME_MAX_TOKEN_COUNT;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_RUNTIME_TEMPRATURE;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_RUNTIME_TOP_P;
 
+import com.amazonaws.AmazonWebServiceRequest;
+import com.amazonaws.Request;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.context.Context;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import javax.annotation.Nullable;
+import org.json.JSONObject;
+
 class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
   @Override
   public void onStart(
-      AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest){
+      AttributesBuilder attributes,
+      Context parentContext,
+      AmazonWebServiceRequest originalRequest) {
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(originalRequest);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
@@ -44,7 +50,8 @@ class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
       double topP = jsonBody.getDouble("top_p");
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TOP_P), topP);
     }
-  };
+  }
+  ;
 
   @Override
   public void onEnd(
@@ -52,7 +59,7 @@ class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
       Context context,
       Request<?> request,
       Object awsResps,
-      @Nullable Throwable error){
+      @Nullable Throwable error) {
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(awsResps);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
@@ -64,7 +71,8 @@ class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
       String completionReason = jsonBody.getString("stop_reason");
       attributes.put(AWS_BEDROCK_FINISH_REASONS, completionReason);
     }
-  };
+  }
+  ;
 
   @Override
   public List<String> modelNames() {

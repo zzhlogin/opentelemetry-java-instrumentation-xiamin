@@ -48,7 +48,10 @@ final class AwsSdkInstrumenterFactory {
   private static final List<AttributesExtractor<Request<?>, Response<?>>>
       extendedAttributesExtractors =
           Arrays.asList(
-              httpAttributesExtractor, rpcAttributesExtractor, experimentalAttributesExtractor, bedrockAttributesExtractor);
+              httpAttributesExtractor,
+              rpcAttributesExtractor,
+              experimentalAttributesExtractor,
+              bedrockAttributesExtractor);
   private static final AwsSdkSpanNameExtractor spanName = new AwsSdkSpanNameExtractor();
 
   private final OpenTelemetry openTelemetry;

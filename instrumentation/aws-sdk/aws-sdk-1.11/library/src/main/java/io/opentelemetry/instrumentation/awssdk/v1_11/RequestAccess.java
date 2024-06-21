@@ -130,7 +130,8 @@ final class RequestAccess {
   }
 
   @Nullable
-  private static MethodHandle findAccessorOrNull(Class<?> clz, String methodName, Class<?> returnType) {
+  private static MethodHandle findAccessorOrNull(
+      Class<?> clz, String methodName, Class<?> returnType) {
     try {
       return MethodHandles.publicLookup()
           .findVirtual(clz, methodName, MethodType.methodType(returnType));
