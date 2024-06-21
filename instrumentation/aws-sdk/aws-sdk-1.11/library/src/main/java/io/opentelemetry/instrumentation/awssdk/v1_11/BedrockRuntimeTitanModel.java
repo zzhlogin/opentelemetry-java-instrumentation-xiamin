@@ -23,7 +23,6 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
   @Override
   public void onStart(
       AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest){
-    System.out.println("BedrockRuntimeTitanModel.onStart");
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(originalRequest);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
@@ -33,23 +32,16 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
     JSONObject jsonBody = new JSONObject(resultBody);
     JSONObject textGenerationConfig = jsonBody.getJSONObject("textGenerationConfig");
     if (textGenerationConfig != null) {
-      System.out.println("textGenerationConfig!!!!!!!!!!!!!!!");
       if (textGenerationConfig.has("maxTokenCount")) {
         int maxTokenCount = textGenerationConfig.getInt("maxTokenCount");
-        System.out.println("maxTokenCount!!!!!!!!!!!!!!!");
-        System.out.println(maxTokenCount);
         attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_MAX_TOKEN_COUNT), maxTokenCount);
       }
       if (textGenerationConfig.has("temperature")) {
         double temperature = textGenerationConfig.getDouble("temperature");
-        System.out.println("temperature!!!!!!!!!!!!!!!");
-        System.out.println(temperature);
         attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TEMPRATURE), temperature);
       }
       if (textGenerationConfig.has("topP")) {
         double topP = textGenerationConfig.getDouble("topP");
-        System.out.println("topP!!!!!!!!!!!!!!!");
-        System.out.println(topP);
         attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TOP_P), topP);
       }
     }
@@ -62,7 +54,6 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
       Request<?> request,
       Object awsResps,
       @Nullable Throwable error){
-    System.out.println("BedrockRuntimeTitanModel.onEnd");
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(awsResps);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
@@ -72,12 +63,8 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
     JSONObject jsonBody = new JSONObject(resultBody);
     JSONArray results = jsonBody.getJSONArray("results");
     if (results != null) {
-      System.out.println("results!!!!!!!!!!!!!!!");
       if (results.getJSONObject(0).has("completionReason")) {
-        System.out.println("results.getJSONObject(0).getString(\"completionReason\")!!!!!!!!!!!!!!!");
         String completionReason = results.getJSONObject(0).getString("completionReason");
-        System.out.println("completionReason!!!!!!!!!!!!!!!");
-        System.out.println(completionReason);
         attributes.put(AWS_BEDROCK_FINISH_REASONS, completionReason);
       }
     }

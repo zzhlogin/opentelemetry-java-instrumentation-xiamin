@@ -19,7 +19,6 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 class BedrockKnowledgeBaseOperation extends AbstractBedrockAgentOperation {
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest){
-    System.out.println("BedrockKnowledgeBaseOperation.onStart");
     setAttribute(attributes, AWS_KNOWLEDGEBASE_ID, originalRequest, RequestAccess::getKnowledgeBaseId);
   };
 
@@ -30,7 +29,6 @@ class BedrockKnowledgeBaseOperation extends AbstractBedrockAgentOperation {
       Request<?> request,
       Object awsResps,
       @Nullable Throwable error){
-    System.out.println("BedrockKnowledgeBaseOperation.onEnd");
     setAttribute(attributes, AWS_KNOWLEDGEBASE_ID, awsResps, RequestAccess::getKnowledgeBaseId);
   };
 
@@ -51,14 +49,7 @@ class BedrockKnowledgeBaseOperation extends AbstractBedrockAgentOperation {
   @Override
   public List<String> responseClassNames() {
     return Arrays.asList(
-        "AssociateAgentKnowledgeBaseResult",
-        "CreateDataSourceResult",
-        "DeleteKnowledgeBaseResult",
-        "DisassociateAgentKnowledgeBaseResult",
-        "GetAgentKnowledgeBaseResult",
-        "GetKnowledgeBaseResult",
-        "ListDataSourcesResult",
-        "UpdateAgentKnowledgeBaseResult"
+        "DeleteKnowledgeBaseResult"
     );
   }
 }

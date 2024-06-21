@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
-import java.lang.reflect.Method;
 
 final class RequestAccess {
 
@@ -86,17 +85,8 @@ final class RequestAccess {
   static ByteBuffer getBody(Object request) {
     RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
     try {
-
-      System.out.println("RequestAccess:getBody!!!!!!!!!!!!!!!");
-      System.out.println("request.getClass().getName()!!!!!!!!!!!!!!!");
-      System.out.println(request.getClass().getName());
-      for (Method method : request.getClass().getMethods()) {
-        System.out.println(method.getName());
-      }
       return (ByteBuffer) access.getBody.invoke(request);
     } catch (Throwable t) {
-      System.out.println("RequestAccess:getBody return null!!!!!!!!!!!!!!!");
-      System.out.println(t);
       return null;
     }
   }
@@ -142,16 +132,9 @@ final class RequestAccess {
   @Nullable
   private static MethodHandle findAccessorOrNull(Class<?> clz, String methodName, Class<?> returnType) {
     try {
-      System.out.println("RequestAccess:findAccessorOrNull!!!!!!!!!!!!!!!");
-      System.out.println("clz.getName()!!!!!!!!!!!!!!!");
-      System.out.println(clz.getName());
-      System.out.println("methodName!!!!!!!!!!!!!!!");
-      System.out.println(methodName);
       return MethodHandles.publicLookup()
           .findVirtual(clz, methodName, MethodType.methodType(returnType));
     } catch (Throwable t) {
-      System.out.println("RequestAccess:findAccessorOrNull return null!!!!!!!!!!!!!!!");
-      System.out.println(t);
       return null;
     }
   }

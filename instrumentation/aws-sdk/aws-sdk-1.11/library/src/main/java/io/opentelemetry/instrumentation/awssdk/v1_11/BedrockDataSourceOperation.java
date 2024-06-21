@@ -19,7 +19,6 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 class BedrockDataSourceOperation extends AbstractBedrockAgentOperation {
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest){
-    System.out.println("BedrockDataSourceOperation.onStart");
     setAttribute(attributes, AWS_DATASOURCE_ID, originalRequest, RequestAccess::getDataSourceId);
   };
 
@@ -30,7 +29,6 @@ class BedrockDataSourceOperation extends AbstractBedrockAgentOperation {
       Request<?> request,
       Object awsResps,
       @Nullable Throwable error){
-    System.out.println("BedrockDataSourceOperation.onEnd");
     setAttribute(attributes, AWS_DATASOURCE_ID, awsResps, RequestAccess::getDataSourceId);
   };
 
@@ -41,6 +39,6 @@ class BedrockDataSourceOperation extends AbstractBedrockAgentOperation {
 
   @Override
   public List<String> responseClassNames() {
-    return Arrays.asList("DeleteDataSourceResult", "GetDataSourceResult", "UpdateDataSourceResult");
+    return Arrays.asList("DeleteDataSourceResult");
   }
 }

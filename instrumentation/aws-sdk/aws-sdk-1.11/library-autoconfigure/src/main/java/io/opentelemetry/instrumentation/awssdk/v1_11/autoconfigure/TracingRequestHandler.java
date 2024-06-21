@@ -24,7 +24,7 @@ public class TracingRequestHandler extends RequestHandler2 {
       AwsSdkTelemetry.builder(GlobalOpenTelemetry.get())
           .setCaptureExperimentalSpanAttributes(
               ConfigPropertiesUtil.getBoolean(
-                  "otel.instrumentation.aws-sdk.experimental-span-attributes", true))
+                  "otel.instrumentation.aws-sdk.experimental-span-attributes", false))
           .setMessagingReceiveInstrumentationEnabled(
               ConfigPropertiesUtil.getBoolean(
                   "otel.instrumentation.messaging.experimental.receive-telemetry.enabled", false))

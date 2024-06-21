@@ -86,13 +86,8 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
 
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, Request<?> request) {
-    System.out.println("BedrockAttributesExtractor.onStart!!!!!!!!!!!!!!!");
     serviceName = request.getServiceName();
-    System.out.println("request.getServiceName()!!!!!!!!!!!!!!!"); // AmazonBedrock, AWSBedrockAgent, AWSBedrockAgentRuntime
-    System.out.println(serviceName);
     AmazonWebServiceRequest originalRequest = request.getOriginalRequest();
-    System.out.println("originalRequest.getClass().getName()!!!!!!!!!!!!!!!");
-    System.out.println(originalRequest.getClass().getName());
     String[] requestClass = originalRequest.getClass().getName().split("\\.");
     switch (serviceName) {
       case "AmazonBedrock":
@@ -124,8 +119,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
         String modelId = getter.apply(originalRequest);
         attributes.put(AWS_BEDROCK_RUNTIME_MODEL_ID, modelId);
         modelName = modelId.split("-")[0];
-        System.out.println("modelName!!!!!!!!!!!!!!!");
-        System.out.println(modelName);
         Class<? extends AbstractBedrockRuntimeModel> modelClass = BEDROC_RUNTIME_MODEL_MAPPING.get(modelName);
         if (modelClass != null) {
           try {
@@ -149,27 +142,17 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
       Request<?> request,
       @Nullable Response<?> response,
       @Nullable Throwable error) {
-    System.out.println("BedrockAttributesExtractor.onEnd!!!!!!!!!!!!!!!");
-    System.out.println(serviceName);
     if (response != null) {
-      System.out.println("response != null!!!!!!!!!!!!!!!");
       Object awsResps = response.getAwsResponse();
       if (awsResps != null) {
-        System.out.println("awsResps != null!!!!!!!!!!!!!!!");
-        System.out.println(awsResps.getClass().getName());
-        System.out.println("awsResps below!!!!!!!!!!!!!!!");
         switch (serviceName) {
           case "AmazonBedrock":
             setAttribute(attributes, AWS_GUARDRAIL_ID, awsResps, RequestAccess::getGuardrailId);
             break;
           case "AWSBedrockAgent":
-            System.out.println("awsResps.getClass().getName()!!!!!!!!!!!!!!!");
-//            System.out.println(awsResps.getClass().getName()); // com.amazonaws.services.bedrockagent.model.GetDataSourceResult
             String[] responseClass = awsResps.getClass().getName().split("\\.");
             Class<? extends AbstractBedrockAgentOperation> operationClass = RESPONSE_CLASS_MAPPING.get(responseClass[responseClass.length - 1]);
             if (operationClass != null) {
-              System.out.println("operationClass.getName()!!!!!!!!!!!!!!!");
-              System.out.println(operationClass.getName());
               try {
                 operationClass.getDeclaredConstructor().newInstance().onEnd(attributes, context, request, awsResps, error);
               } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
@@ -186,24 +169,14 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
             // TODO: Implement onEnd for AWSBedrockRuntime
             HttpResponse httpResps = response.getHttpResponse();
             Map<String, String> headers = httpResps.getHeaders();
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-              System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
-            }
             if (headers.containsKey("X-Amzn-Bedrock-Input-Token-Count")) {
               int inputTokenCount = Integer.parseInt(headers.get("X-Amzn-Bedrock-Input-Token-Count"));
-              System.out.println("X-Amzn-Bedrock-Input-Token-Count!!!!!!!!!!!!!!!");
-              System.out.println(inputTokenCount);
               attributes.put(String.valueOf(AWS_BEDROCK_PROMOT_TOKENS), inputTokenCount);
             }
             if (headers.containsKey("X-Amzn-Bedrock-Output-Token-Count")) {
               int outputTokenCount = Integer.parseInt(headers.get("X-Amzn-Bedrock-Output-Token-Count"));
-              System.out.println("X-Amzn-Bedrock-Output-Token-Count!!!!!!!!!!!!!!!");
-              System.out.println(outputTokenCount);
               attributes.put(String.valueOf(AWS_BEDROCK_COMPLETION_TOKENS), outputTokenCount);
             }
-
-            System.out.println("BEDROC_RUNTIME_MODEL_MAPPING!!!!!!!!!!!!!!!");
-            System.out.println(BEDROC_RUNTIME_MODEL_MAPPING);
 
             Class<? extends AbstractBedrockRuntimeModel> modelClass = BEDROC_RUNTIME_MODEL_MAPPING.get(modelName);
             if (modelClass != null) {

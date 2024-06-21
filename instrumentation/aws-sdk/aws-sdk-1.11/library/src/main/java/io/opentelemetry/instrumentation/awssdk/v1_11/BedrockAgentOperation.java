@@ -20,7 +20,6 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 class BedrockAgentOperation extends AbstractBedrockAgentOperation {
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest){
-    System.out.println("BedrockAgentOperation.onStart");
     setAttribute(attributes, AWS_AGENT_ID, originalRequest, RequestAccess::getAgentId);
   };
 
@@ -31,7 +30,6 @@ class BedrockAgentOperation extends AbstractBedrockAgentOperation {
       Request<?> request,
       @Nullable Object awsResps,
       @Nullable Throwable error){
-    System.out.println("BedrockAgentOperation.onEnd");
     setAttribute(attributes, AWS_AGENT_ID, awsResps, RequestAccess::getAgentId);
   };
 
@@ -62,24 +60,10 @@ class BedrockAgentOperation extends AbstractBedrockAgentOperation {
   @Override
   public List<String> responseClassNames() {
     return Arrays.asList(
-        "CreateAgentActionGroupResult",
-        "CreateAgentAliasResult",
-        "DeleteAgentActionGroupResult",
         "DeleteAgentAliasResult",
         "DeleteAgentResult",
         "DeleteAgentVersionResult",
-        "GetAgentActionGroupResult",
-        "GetAgentAliasResult",
-        "GetAgentResult",
-        "GetAgentVersionResult",
-        "ListAgentActionGroupsResult",
-        "ListAgentAliasesResult",
-        "ListAgentKnowledgeBasesResult",
-        "ListAgentVersionsResult",
-        "PrepareAgentResult",
-        "UpdateAgentActionGroupResult",
-        "UpdateAgentAliasResult",
-        "UpdateAgentResult"
+        "PrepareAgentResult"
     );
   }
 }
