@@ -46,6 +46,12 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getStreamConsumerName(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getStreamConsumerName, request);
+  }
+
+  @Nullable
   static String getTableName(Object request) {
     RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
     return invokeOrNull(access.getTableName, request);
@@ -92,6 +98,63 @@ final class RequestAccess {
   }
 
   @Nullable
+  static String getTopicArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getTopicArn, request);
+  }
+
+  @Nullable
+  static String getTargetArn(Object request) {
+    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
+    return invokeOrNull(access.getTargetArn, request);
+  }
+
+  @Nullable
+  static String getSecretArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getSecretArn, object);
+  }
+
+  @Nullable
+  static String getResourceEventMappingId(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getResourceEventMappingId, object);
+  }
+
+  @Nullable
+  static String getFunctionName(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getFunctionName, object);
+  }
+
+  @Nullable
+  static String getStateMachineArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getStateMachineArn, object);
+  }
+
+  @Nullable
+  static String getActivityArn(Object object) {
+    if (object == null) {
+      return null;
+    }
+    RequestAccess access = REQUEST_ACCESSORS.get(object.getClass());
+    return invokeOrNull(access.getActivityArn, object);
+  }
+
+  @Nullable
   private static String invokeOrNull(@Nullable MethodHandle method, Object obj) {
     if (method == null) {
       return null;
@@ -107,6 +170,7 @@ final class RequestAccess {
   @Nullable private final MethodHandle getQueueUrl;
   @Nullable private final MethodHandle getQueueName;
   @Nullable private final MethodHandle getStreamName;
+  @Nullable private final MethodHandle getStreamConsumerName;
   @Nullable private final MethodHandle getTableName;
   @Nullable private final MethodHandle getAgentId;
   @Nullable private final MethodHandle getKnowledgeBaseId;
@@ -114,6 +178,13 @@ final class RequestAccess {
   @Nullable private final MethodHandle getGuardrailId;
   @Nullable private final MethodHandle getBody;
   @Nullable private final MethodHandle getModelId;
+  @Nullable private final MethodHandle getTopicArn;
+  @Nullable private final MethodHandle getTargetArn;
+  @Nullable private final MethodHandle getSecretArn;
+  @Nullable private final MethodHandle getStateMachineArn;
+  @Nullable private final MethodHandle getActivityArn;
+  @Nullable private final MethodHandle getFunctionName;
+  @Nullable private final MethodHandle getResourceEventMappingId;
 
   private RequestAccess(Class<?> clz) {
     getBucketName = findAccessorOrNull(clz, "getBucketName", String.class);
@@ -121,6 +192,14 @@ final class RequestAccess {
     getQueueName = findAccessorOrNull(clz, "getQueueName", String.class);
     getStreamName = findAccessorOrNull(clz, "getStreamName", String.class);
     getTableName = findAccessorOrNull(clz, "getTableName", String.class);
+    getStreamConsumerName = findAccessorOrNull(clz, "getConsumerName", String.class);
+    getTopicArn = findAccessorOrNull(clz, "getTopicArn", String.class);
+    getTargetArn = findAccessorOrNull(clz, "getTargetArn", String.class);
+    getSecretArn = findAccessorOrNull(clz, "getARN", String.class);
+    getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn", String.class);
+    getActivityArn = findAccessorOrNull(clz, "getActivityArn", String.class);
+    getFunctionName = findAccessorOrNull(clz, "getFunctionName", String.class);
+    getResourceEventMappingId = findAccessorOrNull(clz, "getUUID", String.class);
     getAgentId = findAccessorOrNull(clz, "getAgentId", String.class);
     getKnowledgeBaseId = findAccessorOrNull(clz, "getKnowledgeBaseId", String.class);
     getDataSourceId = findAccessorOrNull(clz, "getDataSourceId", String.class);

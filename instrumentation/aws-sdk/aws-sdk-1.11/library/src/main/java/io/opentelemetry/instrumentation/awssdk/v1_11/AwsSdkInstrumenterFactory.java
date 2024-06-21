@@ -42,16 +42,20 @@ final class AwsSdkInstrumenterFactory {
       new AwsSdkExperimentalAttributesExtractor();
   private static final BedrockAttributesExtractor bedrockAttributesExtractor =
       new BedrockAttributesExtractor();
+  private static final SnsAttributesExtractor snsAttributesExtractor = new SnsAttributesExtractor();
 
   private static final List<AttributesExtractor<Request<?>, Response<?>>>
-      defaultAttributesExtractors = Arrays.asList(httpAttributesExtractor, rpcAttributesExtractor);
+      defaultAttributesExtractors =
+      Arrays.asList(httpAttributesExtractor, rpcAttributesExtractor, snsAttributesExtractor);
   private static final List<AttributesExtractor<Request<?>, Response<?>>>
       extendedAttributesExtractors =
           Arrays.asList(
               httpAttributesExtractor,
               rpcAttributesExtractor,
               experimentalAttributesExtractor,
+              snsAttributesExtractor,
               bedrockAttributesExtractor);
+
   private static final AwsSdkSpanNameExtractor spanName = new AwsSdkSpanNameExtractor();
 
   private final OpenTelemetry openTelemetry;
