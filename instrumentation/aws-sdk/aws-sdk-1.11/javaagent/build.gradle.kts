@@ -92,8 +92,8 @@ testing {
         implementation("com.amazonaws:aws-java-sdk-kinesis:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-dynamodb:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-sns:1.11.0")
-        implementation("com.amazonaws:aws-java-sdk-secretsmanager:1.11.0")
-        implementation("com.amazonaws:aws-java-sdk-stepfunctions:1.11.0")
+//        implementation("com.amazonaws:aws-java-sdk-secretsmanager:1.11.0")
+//        implementation("com.amazonaws:aws-java-sdk-stepfunctions:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-lambda:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-iam:1.11.0")
 
