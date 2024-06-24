@@ -48,7 +48,6 @@ class BedrockRuntimeLlamaModel extends AbstractBedrockRuntimeModel {
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TOP_P), topP);
     }
   }
-  ;
 
   @Override
   public void onEnd(
@@ -69,7 +68,6 @@ class BedrockRuntimeLlamaModel extends AbstractBedrockRuntimeModel {
       attributes.put(AWS_BEDROCK_FINISH_REASONS, completionReason);
     }
   }
-  ;
 
   @Override
   public List<String> modelNames() {

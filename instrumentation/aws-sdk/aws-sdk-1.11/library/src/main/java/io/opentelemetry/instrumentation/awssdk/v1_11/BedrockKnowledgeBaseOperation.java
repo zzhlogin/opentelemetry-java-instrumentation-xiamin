@@ -24,7 +24,6 @@ class BedrockKnowledgeBaseOperation extends AbstractBedrockAgentOperation {
     setAttribute(
         attributes, AWS_KNOWLEDGEBASE_ID, originalRequest, RequestAccess::getKnowledgeBaseId);
   }
-  ;
 
   @Override
   public void onEnd(
@@ -35,7 +34,6 @@ class BedrockKnowledgeBaseOperation extends AbstractBedrockAgentOperation {
       @Nullable Throwable error) {
     setAttribute(attributes, AWS_KNOWLEDGEBASE_ID, awsResps, RequestAccess::getKnowledgeBaseId);
   }
-  ;
 
   @Override
   public List<String> requestClassNames() {

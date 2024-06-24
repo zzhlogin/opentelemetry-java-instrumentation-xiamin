@@ -23,7 +23,6 @@ class BedrockDataSourceOperation extends AbstractBedrockAgentOperation {
       AmazonWebServiceRequest originalRequest) {
     setAttribute(attributes, AWS_DATASOURCE_ID, originalRequest, RequestAccess::getDataSourceId);
   }
-  ;
 
   @Override
   public void onEnd(
@@ -34,7 +33,6 @@ class BedrockDataSourceOperation extends AbstractBedrockAgentOperation {
       @Nullable Throwable error) {
     setAttribute(attributes, AWS_DATASOURCE_ID, awsResps, RequestAccess::getDataSourceId);
   }
-  ;
 
   @Override
   public List<String> requestClassNames() {
