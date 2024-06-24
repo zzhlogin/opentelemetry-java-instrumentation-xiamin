@@ -4,12 +4,16 @@ plugins {
 
 dependencies {
   implementation("io.opentelemetry.contrib:opentelemetry-aws-xray-propagator")
+  implementation("org.json:json") {
+    version {
+      strictly("[20210307,)")
+    }
+  }
 
   library("software.amazon.awssdk:aws-core:2.2.0")
   library("software.amazon.awssdk:sqs:2.2.0")
   library("software.amazon.awssdk:sns:2.2.0")
   library("software.amazon.awssdk:aws-json-protocol:2.2.0")
-  implementation("org.json:json")
   compileOnly(project(":muzzle")) // For @NoMuzzle
 
   testImplementation(project(":instrumentation:aws-sdk:aws-sdk-2.2:testing"))
