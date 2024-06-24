@@ -30,5 +30,4 @@ dependencies {
   implementation("org.apache.groovy:groovy")
   implementation("io.opentelemetry:opentelemetry-api")
   implementation("org.spockframework:spock-core")
-  implementation("org.json:json:20210307")
 }
