@@ -183,4 +183,5 @@ Thanks to all the people who already contributed!
 
 [manual]: https://opentelemetry.io/docs/instrumentation/java/manual/
 
+
 [suppress]: https://opentelemetry.io/docs/instrumentation/java/automatic/agent-config/#suppressing-specific-auto-instrumentation
