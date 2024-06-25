@@ -44,7 +44,7 @@ final class AwsSdkInstrumenterFactory {
 
   private static final List<AttributesExtractor<Request<?>, Response<?>>>
       defaultAttributesExtractors =
-      Arrays.asList(httpAttributesExtractor, rpcAttributesExtractor, snsAttributesExtractor);
+          Arrays.asList(httpAttributesExtractor, rpcAttributesExtractor, snsAttributesExtractor);
   private static final List<AttributesExtractor<Request<?>, Response<?>>>
       extendedAttributesExtractors =
           Arrays.asList(
