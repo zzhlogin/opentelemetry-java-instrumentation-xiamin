@@ -52,7 +52,6 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
       }
     }
   }
-  ;
 
   @Override
   public void onEnd(
@@ -76,7 +75,6 @@ class BedrockRuntimeTitanModel extends AbstractBedrockRuntimeModel {
       }
     }
   }
-  ;
 
   @Override
   public List<String> modelNames() {

@@ -23,7 +23,6 @@ class BedrockAgentOperation extends AbstractBedrockAgentOperation {
       AmazonWebServiceRequest originalRequest) {
     setAttribute(attributes, AWS_AGENT_ID, originalRequest, RequestAccess::getAgentId);
   }
-  ;
 
   @Override
   public void onEnd(
@@ -34,7 +33,6 @@ class BedrockAgentOperation extends AbstractBedrockAgentOperation {
       @Nullable Throwable error) {
     setAttribute(attributes, AWS_AGENT_ID, awsResps, RequestAccess::getAgentId);
   }
-  ;
 
   @Override
   public List<String> requestClassNames() {
