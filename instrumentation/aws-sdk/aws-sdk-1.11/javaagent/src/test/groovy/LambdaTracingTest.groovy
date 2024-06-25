@@ -21,7 +21,7 @@ class LambdaTracingTest extends AgentInstrumentationSpecification {
   def "Lambda operations and tracing"() {
     setup:
     String roleName = "lambda-execution-role"
-    String role_policy = """
+    String rolePolicy = """
       {
         "Version": "2012-10-17",
         "Statement": [
@@ -56,7 +56,7 @@ class LambdaTracingTest extends AgentInstrumentationSpecification {
     String handler = "lambda_function.lambda_handler"
 
     // Create a role
-    String roleARN = awsConnector.createRole(roleName, role_policy)
+    String roleARN = awsConnector.createRole(roleName, rolePolicy)
     awsConnector.attachRolePolicy(roleName, lambdaPolicyArn)
     awsConnector.putRolePolicy(roleName, policyName, lammbdaPolicyDocument)
 
