@@ -93,7 +93,6 @@ testing {
         implementation("com.amazonaws:aws-java-sdk-dynamodb:1.11.0")
         implementation("com.amazonaws:aws-java-sdk-sns:1.11.0")
 
-
         // needed by S3
         implementation("javax.xml.bind:jaxb-api:2.3.1")
       }
