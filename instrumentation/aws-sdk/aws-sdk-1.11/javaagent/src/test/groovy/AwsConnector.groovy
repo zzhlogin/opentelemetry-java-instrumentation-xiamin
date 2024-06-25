@@ -12,7 +12,6 @@ import com.amazonaws.services.kinesis.AmazonKinesisClient
 import com.amazonaws.services.kinesis.model.CreateStreamRequest
 import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
 import com.amazonaws.services.kinesis.model.RegisterStreamConsumerResult
-import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.BucketNotificationConfiguration
 import com.amazonaws.services.s3.model.ObjectListing
@@ -62,9 +61,8 @@ import org.testcontainers.utility.DockerImageName
 
 import java.time.Duration
 import java.nio.ByteBuffer
-import java.io.ByteArrayOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class AwsConnector {
 

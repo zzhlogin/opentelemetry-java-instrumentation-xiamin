@@ -23,16 +23,13 @@ import com.amazonaws.services.dynamodbv2.model.CreateTableRequest
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.model.DeleteStreamRequest
-import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
 import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
-import com.amazonaws.services.sns.model.CreateTopicRequest
 import com.amazonaws.services.sns.model.PublishRequest
-import com.amazonaws.services.sns.model.SubscribeRequest
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
 import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest

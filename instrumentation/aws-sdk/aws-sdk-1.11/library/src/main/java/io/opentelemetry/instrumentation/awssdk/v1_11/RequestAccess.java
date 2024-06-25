@@ -140,26 +140,27 @@ final class RequestAccess {
   @Nullable private final MethodHandle getResourceEventMappingId;
 
   private RequestAccess(Class<?> clz) {
-    getBucketName = findAccessorOrNull(clz, "getBucketName");
-    getQueueUrl = findAccessorOrNull(clz, "getQueueUrl");
-    getQueueName = findAccessorOrNull(clz, "getQueueName");
-    getStreamName = findAccessorOrNull(clz, "getStreamName");
-    getStreamConsumerName = findAccessorOrNull(clz, "getConsumerName");
-    getTableName = findAccessorOrNull(clz, "getTableName");
-    getTopicArn = findAccessorOrNull(clz, "getTopicArn");
-    getTargetArn = findAccessorOrNull(clz, "getTargetArn");
-    getSecretArn = findAccessorOrNull(clz, "getARN");
-    getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn");
-    getActivityArn = findAccessorOrNull(clz, "getActivityArn");
-    getFunctionName = findAccessorOrNull(clz, "getFunctionName");
-    getResourceEventMappingId = findAccessorOrNull(clz, "getUUID");
+    getBucketName = findAccessorOrNull(clz, "getBucketName", String.class);
+    getQueueUrl = findAccessorOrNull(clz, "getQueueUrl", String.class);
+    getQueueName = findAccessorOrNull(clz, "getQueueName", String.class);
+    getStreamName = findAccessorOrNull(clz, "getStreamName", String.class);
+    getTableName = findAccessorOrNull(clz, "getTableName", String.class);
+    getStreamConsumerName = findAccessorOrNull(clz, "getConsumerName", String.class);
+    getTopicArn = findAccessorOrNull(clz, "getTopicArn", String.class);
+    getTargetArn = findAccessorOrNull(clz, "getTargetArn", String.class);
+    getSecretArn = findAccessorOrNull(clz, "getARN", String.class);
+    getStateMachineArn = findAccessorOrNull(clz, "getStateMachineArn", String.class);
+    getActivityArn = findAccessorOrNull(clz, "getActivityArn", String.class);
+    getFunctionName = findAccessorOrNull(clz, "getFunctionName", String.class);
+    getResourceEventMappingId = findAccessorOrNull(clz, "getUUID", String.class);
   }
 
   @Nullable
-  private static MethodHandle findAccessorOrNull(Class<?> clz, String methodName) {
+  private static MethodHandle findAccessorOrNull(
+      Class<?> clz, String methodName, Class<?> returnType) {
     try {
       return MethodHandles.publicLookup()
-          .findVirtual(clz, methodName, MethodType.methodType(String.class));
+          .findVirtual(clz, methodName, MethodType.methodType(returnType));
     } catch (Throwable t) {
       return null;
     }
