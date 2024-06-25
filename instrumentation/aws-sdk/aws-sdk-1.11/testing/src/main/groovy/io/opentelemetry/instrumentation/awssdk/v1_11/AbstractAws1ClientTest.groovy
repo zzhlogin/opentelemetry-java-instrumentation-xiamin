@@ -23,7 +23,6 @@ import com.amazonaws.services.dynamodbv2.model.CreateTableRequest
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.model.DeleteStreamRequest
-import com.amazonaws.services.kinesis.model.DescribeStreamConsumerRequest
 import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
@@ -38,9 +37,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder
 //import com.amazonaws.services.bedrockruntime.AmazonBedrockRuntimeClientBuilder;
 //import com.amazonaws.services.bedrockruntime.model.InvokeModelRequest;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder
-import com.amazonaws.services.sns.model.CreateTopicRequest
 import com.amazonaws.services.sns.model.PublishRequest
-import com.amazonaws.services.sns.model.SubscribeRequest
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
 import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
 import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
@@ -57,13 +54,12 @@ import io.opentelemetry.semconv.SemanticAttributes
 import io.opentelemetry.testing.internal.armeria.common.HttpResponse
 import io.opentelemetry.testing.internal.armeria.common.HttpStatus
 import io.opentelemetry.testing.internal.armeria.common.MediaType
-import io.opentelemetry.testing.internal.armeria.common.HttpHeaders
 import io.opentelemetry.testing.internal.armeria.testing.junit5.server.mock.MockWebServerExtension
 import spock.lang.Shared
 import spock.lang.Unroll
 
 import java.time.Duration
-import java.nio.charset.StandardCharsets
+//import java.nio.charset.StandardCharsets
 
 import static io.opentelemetry.api.trace.SpanKind.CLIENT
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER
