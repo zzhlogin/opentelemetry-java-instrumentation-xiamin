@@ -17,6 +17,7 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.Request;
 import com.amazonaws.Response;
 import com.amazonaws.http.HttpResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.context.Context;
@@ -174,13 +175,13 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
           } catch (InstantiationException
               | IllegalAccessException
               | NoSuchMethodException
-              | InvocationTargetException e) {
+              | InvocationTargetException
+              | JsonProcessingException e) {
             throw new IllegalStateException("Failed to instantiate operation class", e);
           }
         }
         break;
       default:
-        // Perform default action
         break;
     }
   }
@@ -250,6 +251,8 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
                   | NoSuchMethodException
                   | InvocationTargetException e) {
                 throw new IllegalStateException("Failed to instantiate operation class", e);
+              } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Failed to convert String reponse to Json", e);
               }
             }
             break;
