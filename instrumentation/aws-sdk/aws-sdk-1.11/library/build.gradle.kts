@@ -4,9 +4,9 @@ plugins {
 
 dependencies {
   implementation("io.opentelemetry.contrib:opentelemetry-aws-xray-propagator")
-  implementation("org.json:json") {
+  implementation("com.fasterxml.jackson.core:jackson-databind") {
     version {
-      strictly("[20210307,)")
+      strictly("[2.13.3,)")
     }
   }
 

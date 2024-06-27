@@ -48,10 +48,11 @@ enum AwsSdkRequestType {
       request("aws.stepfunctions.state_machine_arn", "stateMachineArn"),
       request("aws.stepfunctions.activity_arn", "activityArn")),
   BEDROCK(request(AWS_BEDROCK_GUARDRAIL_ID.getKey(), "guardrailIdentifier")),
-  BEDROCKAGENT(
+  BEDROCKAGENTOPERATION(
       request(AWS_BEDROCK_AGENT_ID.getKey(), "agentId"),
-      request(AWS_BEDROCK_DATASOURCE_ID.getKey(), "dataSourceId"),
-      request(AWS_BEDROCK_KNOWLEDGEBASE_ID.getKey(), "knowledgeBaseId")),
+      response(AWS_BEDROCK_AGENT_ID.getKey(), "agentId")),
+  BEDROCKDATASOURCEOPERATION(request(AWS_BEDROCK_DATASOURCE_ID.getKey(), "dataSourceId")),
+  BEDROCKKNOWLEDGEBASEOPERATION(request(AWS_BEDROCK_KNOWLEDGEBASE_ID.getKey(), "knowledgeBaseId")),
   BEDROCKRUNTIME(
       request(GEN_AI_MODEL.getKey(), "modelId"),
       request(GEN_AI_TEMPERATURE.getKey(), "body"),

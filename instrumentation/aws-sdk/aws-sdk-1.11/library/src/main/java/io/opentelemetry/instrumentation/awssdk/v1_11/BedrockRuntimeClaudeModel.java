@@ -12,6 +12,9 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 
 import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.Request;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.context.Context;
 import java.nio.ByteBuffer;
@@ -20,34 +23,34 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.json.JSONObject;
 
 class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
   @Override
   public void onStart(
-      AttributesBuilder attributes,
-      Context parentContext,
-      AmazonWebServiceRequest originalRequest) {
+      AttributesBuilder attributes, Context parentContext, AmazonWebServiceRequest originalRequest)
+      throws JsonProcessingException {
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(originalRequest);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
     byte[] bytes = new byte[resultBodyBuffer.remaining()];
     resultBodyBuffer.get(bytes);
     String resultBody = new String(bytes, StandardCharsets.UTF_8);
-    JSONObject jsonBody = new JSONObject(resultBody);
-    if (jsonBody.has("max_tokens_to_sample")) {
-      int maxTokenCount = jsonBody.getInt("max_tokens_to_sample");
+    JsonNode jsonNode = objectMapper.readTree(resultBody);
+    if (jsonNode.has("max_tokens_to_sample") && jsonNode.get("max_tokens_to_sample").isInt()) {
+      int maxTokenCount = jsonNode.get("max_tokens_to_sample").asInt();
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_MAX_TOKEN_COUNT), maxTokenCount);
-    } else if (jsonBody.has("max_tokens")) {
-      int maxTokenCount = jsonBody.getInt("max_tokens");
+    } else if (jsonNode.has("max_tokens") && jsonNode.get("max_tokens").isInt()) {
+      int maxTokenCount = jsonNode.get("max_tokens").asInt();
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_MAX_TOKEN_COUNT), maxTokenCount);
     }
-    if (jsonBody.has("temperature")) {
-      double temperature = jsonBody.getDouble("temperature");
+    if (jsonNode.has("temperature") && jsonNode.get("temperature").isDouble()) {
+      double temperature = jsonNode.get("temperature").asDouble();
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TEMPRATURE), temperature);
     }
-    if (jsonBody.has("top_p")) {
-      double topP = jsonBody.getDouble("top_p");
+    if (jsonNode.has("top_p") && jsonNode.get("top_p").isDouble()) {
+      double topP = jsonNode.get("top_p").asDouble();
       attributes.put(String.valueOf(AWS_BEDROCK_RUNTIME_TOP_P), topP);
     }
   }
@@ -58,16 +61,17 @@ class BedrockRuntimeClaudeModel extends AbstractBedrockRuntimeModel {
       Context context,
       Request<?> request,
       Object awsResps,
-      @Nullable Throwable error) {
+      @Nullable Throwable error)
+      throws JsonProcessingException {
     Function<Object, ByteBuffer> getter = RequestAccess::getBody;
     ByteBuffer body = getter.apply(awsResps);
     ByteBuffer resultBodyBuffer = body.asReadOnlyBuffer();
     byte[] bytes = new byte[resultBodyBuffer.remaining()];
     resultBodyBuffer.get(bytes);
     String resultBody = new String(bytes, StandardCharsets.UTF_8);
-    JSONObject jsonBody = new JSONObject(resultBody);
-    if (jsonBody.has("stop_reason")) {
-      String completionReason = jsonBody.getString("stop_reason");
+    JsonNode jsonNode = objectMapper.readTree(resultBody);
+    if (jsonNode.has("stop_reason") && jsonNode.get("stop_reason").isTextual()) {
+      String completionReason = jsonNode.get("stop_reason").asText();
       attributes.put(AWS_BEDROCK_FINISH_REASONS, completionReason);
     }
   }
