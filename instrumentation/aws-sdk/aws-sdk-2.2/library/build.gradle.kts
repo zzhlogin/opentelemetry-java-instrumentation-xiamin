@@ -4,6 +4,11 @@ plugins {
 
 dependencies {
   implementation("io.opentelemetry.contrib:opentelemetry-aws-xray-propagator")
+  implementation("org.json:json") {
+    version {
+      strictly("[20210307,)")
+    }
+  }
 
   library("software.amazon.awssdk:aws-core:2.2.0")
   library("software.amazon.awssdk:sqs:2.2.0")
@@ -19,6 +24,9 @@ dependencies {
   testLibrary("software.amazon.awssdk:rds:2.2.0")
   testLibrary("software.amazon.awssdk:s3:2.2.0")
   testLibrary("software.amazon.awssdk:ses:2.2.0")
+  testLibrary("software.amazon.awssdk:secretsmanager:2.2.0")
+  testLibrary("software.amazon.awssdk:sfn:2.2.0")
+  testLibrary("software.amazon.awssdk:lambda:2.2.0")
 
   // last version that does not use json protocol
   latestDepTestLibrary("software.amazon.awssdk:sqs:2.21.17")

@@ -23,10 +23,31 @@ import com.amazonaws.services.dynamodbv2.model.CreateTableRequest
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
 import com.amazonaws.services.kinesis.model.DeleteStreamRequest
+import com.amazonaws.services.kinesis.model.RegisterStreamConsumerRequest
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+//import com.amazonaws.services.bedrockagent.AWSBedrockAgentClientBuilder;
+//import com.amazonaws.services.bedrockagent.model.GetAgentRequest;
+//import com.amazonaws.services.bedrockagent.model.GetKnowledgeBaseRequest;
+//import com.amazonaws.services.bedrockagent.model.GetDataSourceRequest;
+//import com.amazonaws.services.bedrock.AmazonBedrockClientBuilder;
+//import com.amazonaws.services.bedrock.model.GetGuardrailRequest;
+//import com.amazonaws.services.bedrockruntime.AmazonBedrockRuntimeClientBuilder;
+//import com.amazonaws.services.bedrockruntime.model.InvokeModelRequest;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
+import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
+import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
+import com.amazonaws.services.stepfunctions.model.GetActivityTaskRequest
+import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder
+import com.amazonaws.services.lambda.model.GetEventSourceMappingRequest
+import com.amazonaws.services.lambda.model.GetFunctionRequest
+
+
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
 import io.opentelemetry.semconv.SemanticAttributes
@@ -38,6 +59,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 
 import java.time.Duration
+//import java.nio.charset.StandardCharsets
 
 import static io.opentelemetry.api.trace.SpanKind.CLIENT
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER
@@ -101,6 +123,9 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           name "$service.$operation"
           kind operation == "SendMessage" ? PRODUCER : CLIENT
           hasNoParent()
+          span.attributes.each { attribute ->
+            println("      ${attribute}")
+          }
           attributes {
             "$SemanticAttributes.HTTP_URL" "${server.httpUri()}"
             "$SemanticAttributes.HTTP_METHOD" "$method"
@@ -117,7 +142,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
             "aws.endpoint" "${server.httpUri()}"
             "aws.agent" "java-aws-sdk"
             for (def addedTag : additionalAttributes) {
-              "$addedTag.key" "$addedTag.value"
+              "$addedTag.key" addedTag.value
             }
           }
         }
@@ -156,6 +181,80 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
+//    "Bedrock"    | "GetGuardrail"      | "GET" | "/"                   | AmazonBedrockClientBuilder.standard()                             | { c -> c.getGuardrail(new GetGuardrailRequest().withGuardrailIdentifier("guardrailId")) } | ["aws.bedrock.guardrail_id": "guardrailId"] | """
+//        {
+//           "blockedInputMessaging": "string",
+//           "blockedOutputsMessaging": "string",
+//           "contentPolicy": {},
+//           "createdAt": "2024-06-12T18:31:45Z",
+//           "description": "string",
+//           "guardrailArn": "string",
+//           "guardrailId": "guardrailId",
+//           "kmsKeyArn": "string",
+//           "name": "string",
+//           "sensitiveInformationPolicy": {},
+//           "status": "READY",
+//           "topicPolicy": {
+//              "topics": [
+//                 {
+//                    "definition": "string",
+//                    "examples": [ "string" ],
+//                    "name": "string",
+//                    "type": "string"
+//                 }
+//              ]
+//           },
+//           "updatedAt": "2024-06-12T18:31:48Z",
+//           "version": "DRAFT",
+//           "wordPolicy": {}
+//        }
+//      """
+//    "AWSBedrockAgent"    | "GetAgent"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getAgent(new GetAgentRequest().withAgentId("agentId")) } | ["aws.bedrock.agent_id": "agentId"] | ""
+//    "AWSBedrockAgent"    | "GetKnowledgeBase"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getKnowledgeBase(new GetKnowledgeBaseRequest().withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.knowledgebase_id": "knowledgeBaseId"] | ""
+//    "AWSBedrockAgent"    | "GetDataSource"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getDataSource(new GetDataSourceRequest().withDataSourceId("datasourceId").withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.datasource_id": "datasourceId"] | ""
+//    "BedrockRuntime"    | "InvokeModel"      | "POST" | "/"                   | AmazonBedrockRuntimeClientBuilder.standard()                             |
+//      { c -> c.invokeModel(
+//        new InvokeModelRequest().withModelId("anthropic.claude-v2").withBody(StandardCharsets.UTF_8.encode(
+//          "{\"prompt\":\"Hello, world!\",\"temperature\":0.7,\"top_p\":0.9,\"max_tokens_to_sample\":100}\n"
+//        ))) } | ["gen_ai.request.top_p": 0.9, "gen_ai.request.temperature": 0.7, "gen_ai.request.model": "anthropic.claude-v2", "gen_ai.request.max_tokens": 100, "gen_ai.system": "AWS Bedrock", "gen_ai.response.finish_reasons": "length"] | """
+//        {
+//            "completion": " Here is a simple explanation of black ",
+//            "stop_reason": "length",
+//            "stop": "holes"
+//        }
+//      """
+    "SNS"        | "Publish"           | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | AmazonSNSClientBuilder.standard()                 | { c -> c.publish(new PublishRequest().withMessage("somemessage").withTopicArn("somearn")) } | ["$SemanticAttributes.MESSAGING_DESTINATION_NAME": "somearn"] | """
+          <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+              <PublishResult>
+                  <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+              </PublishResult>
+              <ResponseMetadata>
+                  <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+              </ResponseMetadata>
+          </PublishResponse>
+      """
+    "SNS"      | "Publish"            | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | AmazonSNSClientBuilder.standard()                 | { c -> c.publish(new PublishRequest().withMessage("somemessage").withTargetArn("somearn")) } | ["$SemanticAttributes.MESSAGING_DESTINATION_NAME": "somearn"] | """
+          <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+              <PublishResult>
+                  <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+              </PublishResult>
+              <ResponseMetadata>
+                  <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+              </ResponseMetadata>
+          </PublishResponse>
+      """
+    "Kinesis"    | "RegisterStreamConsumer"  | "POST" | "/"                   | AmazonKinesisClientBuilder.standard()                        | { c -> c.registerStreamConsumer(new RegisterStreamConsumerRequest().withStreamARN("streamARN").withConsumerName("consumerName")) } | ["aws.stream.consumer_name": "consumerName"] | ""
+    "AWSSecretsManager"    | "CreateSecret"  | "POST" | "/"                   | AWSSecretsManagerClientBuilder.standard()                        | { c -> c.createSecret(new CreateSecretRequest().withName("secretName").withSecretString("secretValue")) } | ["aws.secretsmanager.secret_arn": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3"] | """
+          {
+            "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3",
+            "Name":"MyTestDatabaseSecret",
+            "VersionId": "EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
+          }
+      """
+    "AWSStepFunctions"    | "DescribeStateMachine"  | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) } | ["aws.stepfunctions.state_machine_arn": "stateMachineArn"] | ""
+    "AWSStepFunctions"    | "GetActivityTask"     | "POST" | "/"                   | AWSStepFunctionsClientBuilder.standard()                        | { c -> c.getActivityTask(new GetActivityTaskRequest().withActivityArn("activityArn")) }      | ["aws.stepfunctions.activity_arn": "activityArn"] | ""
+    "AWSLambda"    | "GetEventSourceMapping"  | "GET" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.getEventSourceMapping(new GetEventSourceMappingRequest().withUUID("uuid")) } | ["aws.lambda.resource_mapping_id": "uuid"]   | ""
+    "AWSLambda"    | "GetFunction"            | "GET" | "/"                   | AWSLambdaClientBuilder.standard()                        | { c -> c.getFunction(new GetFunctionRequest().withFunctionName("functionName")) }           | ["aws.lambda.function_name": "functionName"] | ""
   }
 
   def "send #operation request to closed port"() {
