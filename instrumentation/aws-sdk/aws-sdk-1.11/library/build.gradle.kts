@@ -4,6 +4,11 @@ plugins {
 
 dependencies {
   implementation("io.opentelemetry.contrib:opentelemetry-aws-xray-propagator")
+  implementation("com.fasterxml.jackson.core:jackson-databind") {
+    version {
+      strictly("[2.13.3,)")
+    }
+  }
 
   library("com.amazonaws:aws-java-sdk-core:1.11.0")
   library("com.amazonaws:aws-java-sdk-sqs:1.11.106")
