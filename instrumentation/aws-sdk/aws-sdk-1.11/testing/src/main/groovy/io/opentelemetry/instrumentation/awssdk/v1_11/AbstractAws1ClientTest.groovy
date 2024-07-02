@@ -46,6 +46,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 
 import java.time.Duration
+import java.nio.charset.StandardCharsets
 
 import static io.opentelemetry.api.trace.SpanKind.CLIENT
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER
