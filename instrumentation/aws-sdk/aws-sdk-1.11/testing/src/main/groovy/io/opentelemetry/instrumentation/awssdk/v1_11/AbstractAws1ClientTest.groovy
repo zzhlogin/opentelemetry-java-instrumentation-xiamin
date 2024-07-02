@@ -34,7 +34,7 @@ import com.amazonaws.services.bedrockagent.model.GetDataSourceRequest
 import com.amazonaws.services.bedrock.AmazonBedrockClientBuilder
 import com.amazonaws.services.bedrock.model.GetGuardrailRequest
 import com.amazonaws.services.bedrockruntime.AmazonBedrockRuntimeClientBuilder
-import com.amazonaws.services.bedrockruntime.model.InvokeModelRequest;
+import com.amazonaws.services.bedrockruntime.model.InvokeModelRequest
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
 import io.opentelemetry.semconv.SemanticAttributes
