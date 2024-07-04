@@ -126,7 +126,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
             "aws.endpoint" "${server.httpUri()}"
             "aws.agent" "java-aws-sdk"
             for (def addedTag : additionalAttributes) {
-              "$addedTag.key" addedTag.value
+              "$addedTag.key" "$addedTag.value"
             }
           }
         }
@@ -200,7 +200,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
       { c -> c.invokeModel(
         new InvokeModelRequest().withModelId("anthropic.claude-v2").withBody(StandardCharsets.UTF_8.encode(
           "{\"prompt\":\"Hello, world!\",\"temperature\":0.7,\"top_p\":0.9,\"max_tokens_to_sample\":100}\n"
-        ))) } | ["gen_ai.request.top_p": 0.9, "gen_ai.request.temperature": 0.7, "gen_ai.request.model": "anthropic.claude-v2", "gen_ai.request.max_tokens": 100, "gen_ai.system": "AWS Bedrock", "gen_ai.response.finish_reasons": "length"] | """
+        ))) } | ["gen_ai.request.model": "anthropic.claude-v2", "gen_ai.system": "AWS Bedrock"] | """
         {
             "completion": " Here is a simple explanation of black ",
             "stop_reason": "length",

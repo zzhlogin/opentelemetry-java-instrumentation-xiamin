@@ -6,8 +6,6 @@
 package io.opentelemetry.instrumentation.awssdk.v1_11;
 
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_AGENT_ID;
-import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_COMPLETION_TOKENS;
-import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_PROMOT_TOKENS;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_RUNTIME_MODEL_ID;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_BEDROCK_SYSTEM;
 import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttributes.AWS_GUARDRAIL_ID;
@@ -16,8 +14,6 @@ import static io.opentelemetry.instrumentation.awssdk.v1_11.AwsExperimentalAttri
 import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.Request;
 import com.amazonaws.Response;
-import com.amazonaws.http.HttpResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.context.Context;
@@ -33,13 +29,10 @@ import javax.annotation.Nullable;
 
 public class BedrockAttributesExtractor implements AttributesExtractor<Request<?>, Response<?>> {
   private String serviceName;
-  private String modelName;
   private static final Map<String, Class<? extends AbstractBedrockAgentOperation>>
       REQUEST_CLASS_MAPPING;
   private static final Map<String, Class<? extends AbstractBedrockAgentOperation>>
       RESPONSE_CLASS_MAPPING;
-  private static final Map<String, Class<? extends AbstractBedrockRuntimeModel>>
-      BEDROC_RUNTIME_MODEL_MAPPING;
 
   static {
     List<Class<? extends AbstractBedrockAgentOperation>> operations =
@@ -47,12 +40,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
             BedrockKnowledgeBaseOperation.class,
             BedrockDataSourceOperation.class,
             BedrockAgentOperation.class);
-
-    List<Class<? extends AbstractBedrockRuntimeModel>> models =
-        Arrays.asList(
-            BedrockRuntimeClaudeModel.class,
-            BedrockRuntimeLlamaModel.class,
-            BedrockRuntimeTitanModel.class);
 
     REQUEST_CLASS_MAPPING =
         operations.stream()
@@ -102,24 +89,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
                   }
                 })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    BEDROC_RUNTIME_MODEL_MAPPING =
-        models.stream()
-            .flatMap(
-                modelClass -> {
-                  try {
-                    return modelClass.getDeclaredConstructor().newInstance().modelNames().stream()
-                        .collect(Collectors.toMap(modelName -> modelName, modelName -> modelClass))
-                        .entrySet()
-                        .stream();
-                  } catch (InstantiationException
-                      | IllegalAccessException
-                      | InvocationTargetException
-                      | NoSuchMethodException e) {
-                    throw new IllegalStateException("Failed to instantiate operation class", e);
-                  }
-                })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   @Override
@@ -155,7 +124,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
             attributes, AWS_KNOWLEDGEBASE_ID, originalRequest, RequestAccess::getKnowledgeBaseId);
         break;
       case "AmazonBedrockRuntime":
-        // TODO: Implement onStart for AWSBedrockRuntime
         if (!Objects.equals(requestClass[requestClass.length - 1], "InvokeModelRequest")) {
           break;
         }
@@ -163,23 +131,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
         Function<Object, String> getter = RequestAccess::getModelId;
         String modelId = getter.apply(originalRequest);
         attributes.put(AWS_BEDROCK_RUNTIME_MODEL_ID, modelId);
-        modelName = modelId.split("-")[0];
-        Class<? extends AbstractBedrockRuntimeModel> modelClass =
-            BEDROC_RUNTIME_MODEL_MAPPING.get(modelName);
-        if (modelClass != null) {
-          try {
-            modelClass
-                .getDeclaredConstructor()
-                .newInstance()
-                .onStart(attributes, parentContext, originalRequest);
-          } catch (InstantiationException
-              | IllegalAccessException
-              | NoSuchMethodException
-              | InvocationTargetException
-              | JsonProcessingException e) {
-            throw new IllegalStateException("Failed to instantiate operation class", e);
-          }
-        }
         break;
       default:
         break;
@@ -224,37 +175,6 @@ public class BedrockAttributesExtractor implements AttributesExtractor<Request<?
                 attributes, AWS_KNOWLEDGEBASE_ID, awsResps, RequestAccess::getKnowledgeBaseId);
             break;
           case "AmazonBedrockRuntime":
-            // TODO: Implement onEnd for AWSBedrockRuntime
-            HttpResponse httpResps = response.getHttpResponse();
-            Map<String, String> headers = httpResps.getHeaders();
-            if (headers.containsKey("X-Amzn-Bedrock-Input-Token-Count")) {
-              int inputTokenCount =
-                  Integer.parseInt(headers.get("X-Amzn-Bedrock-Input-Token-Count"));
-              attributes.put(String.valueOf(AWS_BEDROCK_PROMOT_TOKENS), inputTokenCount);
-            }
-            if (headers.containsKey("X-Amzn-Bedrock-Output-Token-Count")) {
-              int outputTokenCount =
-                  Integer.parseInt(headers.get("X-Amzn-Bedrock-Output-Token-Count"));
-              attributes.put(String.valueOf(AWS_BEDROCK_COMPLETION_TOKENS), outputTokenCount);
-            }
-
-            Class<? extends AbstractBedrockRuntimeModel> modelClass =
-                BEDROC_RUNTIME_MODEL_MAPPING.get(modelName);
-            if (modelClass != null) {
-              try {
-                modelClass
-                    .getDeclaredConstructor()
-                    .newInstance()
-                    .onEnd(attributes, context, request, awsResps, error);
-              } catch (InstantiationException
-                  | IllegalAccessException
-                  | NoSuchMethodException
-                  | InvocationTargetException e) {
-                throw new IllegalStateException("Failed to instantiate operation class", e);
-              } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Failed to convert String reponse to Json", e);
-              }
-            }
             break;
           default:
             // Perform default action

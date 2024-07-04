@@ -8,7 +8,6 @@ package io.opentelemetry.instrumentation.awssdk.v1_11;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
 final class RequestAccess {
@@ -82,16 +81,6 @@ final class RequestAccess {
   }
 
   @Nullable
-  static ByteBuffer getBody(Object request) {
-    RequestAccess access = REQUEST_ACCESSORS.get(request.getClass());
-    try {
-      return (ByteBuffer) access.getBody.invoke(request);
-    } catch (Throwable t) {
-      return null;
-    }
-  }
-
-  @Nullable
   private static String invokeOrNull(@Nullable MethodHandle method, Object obj) {
     if (method == null) {
       return null;
@@ -112,7 +101,6 @@ final class RequestAccess {
   @Nullable private final MethodHandle getKnowledgeBaseId;
   @Nullable private final MethodHandle getDataSourceId;
   @Nullable private final MethodHandle getGuardrailId;
-  @Nullable private final MethodHandle getBody;
   @Nullable private final MethodHandle getModelId;
 
   private RequestAccess(Class<?> clz) {
@@ -125,7 +113,6 @@ final class RequestAccess {
     getKnowledgeBaseId = findAccessorOrNull(clz, "getKnowledgeBaseId", String.class);
     getDataSourceId = findAccessorOrNull(clz, "getDataSourceId", String.class);
     getGuardrailId = findAccessorOrNull(clz, "getGuardrailId", String.class);
-    getBody = findAccessorOrNull(clz, "getBody", ByteBuffer.class);
     getModelId = findAccessorOrNull(clz, "getModelId", String.class);
   }
 
