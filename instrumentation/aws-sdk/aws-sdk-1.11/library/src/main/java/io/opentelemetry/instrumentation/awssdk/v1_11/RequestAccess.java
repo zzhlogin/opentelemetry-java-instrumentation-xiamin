@@ -104,24 +104,23 @@ final class RequestAccess {
   @Nullable private final MethodHandle getModelId;
 
   private RequestAccess(Class<?> clz) {
-    getBucketName = findAccessorOrNull(clz, "getBucketName", String.class);
-    getQueueUrl = findAccessorOrNull(clz, "getQueueUrl", String.class);
-    getQueueName = findAccessorOrNull(clz, "getQueueName", String.class);
-    getStreamName = findAccessorOrNull(clz, "getStreamName", String.class);
-    getTableName = findAccessorOrNull(clz, "getTableName", String.class);
-    getAgentId = findAccessorOrNull(clz, "getAgentId", String.class);
-    getKnowledgeBaseId = findAccessorOrNull(clz, "getKnowledgeBaseId", String.class);
-    getDataSourceId = findAccessorOrNull(clz, "getDataSourceId", String.class);
-    getGuardrailId = findAccessorOrNull(clz, "getGuardrailId", String.class);
-    getModelId = findAccessorOrNull(clz, "getModelId", String.class);
+    getBucketName = findAccessorOrNull(clz, "getBucketName");
+    getQueueUrl = findAccessorOrNull(clz, "getQueueUrl");
+    getQueueName = findAccessorOrNull(clz, "getQueueName");
+    getStreamName = findAccessorOrNull(clz, "getStreamName");
+    getTableName = findAccessorOrNull(clz, "getTableName");
+    getAgentId = findAccessorOrNull(clz, "getAgentId");
+    getKnowledgeBaseId = findAccessorOrNull(clz, "getKnowledgeBaseId");
+    getDataSourceId = findAccessorOrNull(clz, "getDataSourceId");
+    getGuardrailId = findAccessorOrNull(clz, "getGuardrailId");
+    getModelId = findAccessorOrNull(clz, "getModelId");
   }
 
   @Nullable
-  private static MethodHandle findAccessorOrNull(
-      Class<?> clz, String methodName, Class<?> returnType) {
+  private static MethodHandle findAccessorOrNull(Class<?> clz, String methodName) {
     try {
       return MethodHandles.publicLookup()
-          .findVirtual(clz, methodName, MethodType.methodType(returnType));
+          .findVirtual(clz, methodName, MethodType.methodType(String.class));
     } catch (Throwable t) {
       return null;
     }

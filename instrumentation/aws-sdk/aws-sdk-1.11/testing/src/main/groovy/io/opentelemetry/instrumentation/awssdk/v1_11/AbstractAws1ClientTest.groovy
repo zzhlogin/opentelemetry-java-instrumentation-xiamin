@@ -165,7 +165,7 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
-    "Bedrock"    | "GetGuardrail"      | "GET" | "/"                   | AmazonBedrockClientBuilder.standard()                             | { c -> c.getGuardrail(new GetGuardrailRequest().withGuardrailIdentifier("guardrailId")) } | ["aws.bedrock.guardrail_id": "guardrailId"] | """
+    "Bedrock"    | "GetGuardrail"      | "GET" | "/"                   | AmazonBedrockClientBuilder.standard()                             | { c -> c.getGuardrail(new GetGuardrailRequest().withGuardrailIdentifier("guardrailId")) } | ["aws.bedrock.guardrail.id": "guardrailId"] | """
         {
            "blockedInputMessaging": "string",
            "blockedOutputsMessaging": "string",
@@ -193,14 +193,14 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
            "wordPolicy": {}
         }
       """
-    "AWSBedrockAgent"    | "GetAgent"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getAgent(new GetAgentRequest().withAgentId("agentId")) } | ["aws.bedrock.agent_id": "agentId"] | ""
-    "AWSBedrockAgent"    | "GetKnowledgeBase"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getKnowledgeBase(new GetKnowledgeBaseRequest().withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.knowledgebase_id": "knowledgeBaseId"] | ""
-    "AWSBedrockAgent"    | "GetDataSource"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getDataSource(new GetDataSourceRequest().withDataSourceId("datasourceId").withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.datasource_id": "datasourceId"] | ""
+    "AWSBedrockAgent"    | "GetAgent"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getAgent(new GetAgentRequest().withAgentId("agentId")) } | ["aws.bedrock.agent.id": "agentId"] | ""
+    "AWSBedrockAgent"    | "GetKnowledgeBase"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getKnowledgeBase(new GetKnowledgeBaseRequest().withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.knowledgebase.id": "knowledgeBaseId"] | ""
+    "AWSBedrockAgent"    | "GetDataSource"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getDataSource(new GetDataSourceRequest().withDataSourceId("datasourceId").withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.datasource.id": "datasourceId"] | ""
     "BedrockRuntime"    | "InvokeModel"      | "POST" | "/"                   | AmazonBedrockRuntimeClientBuilder.standard()                             |
       { c -> c.invokeModel(
         new InvokeModelRequest().withModelId("anthropic.claude-v2").withBody(StandardCharsets.UTF_8.encode(
           "{\"prompt\":\"Hello, world!\",\"temperature\":0.7,\"top_p\":0.9,\"max_tokens_to_sample\":100}\n"
-        ))) } | ["gen_ai.request.model": "anthropic.claude-v2", "gen_ai.system": "AWS Bedrock"] | """
+        ))) } | ["gen_ai.request.model": "anthropic.claude-v2", "gen_ai.system": "aws_bedrock"] | """
         {
             "completion": " Here is a simple explanation of black ",
             "stop_reason": "length",
