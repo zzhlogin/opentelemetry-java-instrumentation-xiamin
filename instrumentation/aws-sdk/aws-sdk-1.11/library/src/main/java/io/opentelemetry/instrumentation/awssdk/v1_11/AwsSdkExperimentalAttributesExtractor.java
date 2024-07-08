@@ -52,13 +52,42 @@ class AwsSdkExperimentalAttributesExtractor
     setAttribute(attributes, AWS_QUEUE_NAME, originalRequest, RequestAccess::getQueueName);
     setAttribute(attributes, AWS_STREAM_NAME, originalRequest, RequestAccess::getStreamName);
     setAttribute(attributes, AWS_TABLE_NAME, originalRequest, RequestAccess::getTableName);
+    if (isBedrockService()) {
+      bedrockOnStart(attributes, originalRequest, requestClassName);
+    }
+  }
 
+  @Override
+  public void onEnd(
+      AttributesBuilder attributes,
+      Context context,
+      Request<?> request,
+      @Nullable Response<?> response,
+      @Nullable Throwable error) {
+    if (response != null) {
+      Object awsResp = response.getAwsResponse();
+      if (awsResp instanceof AmazonWebServiceResponse) {
+        AmazonWebServiceResponse<?> awsWebServiceResponse = (AmazonWebServiceResponse<?>) awsResp;
+        String requestId = awsWebServiceResponse.getRequestId();
+        if (requestId != null) {
+          attributes.put(AWS_REQUEST_ID, requestId);
+        }
+      }
+      if (awsResp != null && isBedrockService()) {
+        bedrockOnEnd(attributes, awsResp);
+      }
+    }
+  }
+
+  private void bedrockOnStart(
+      AttributesBuilder attributes, Object originalRequest, String requestClassName) {
     switch (serviceName) {
       case BEDROCK_SERVICE:
         setAttribute(attributes, AWS_GUARDRAIL_ID, originalRequest, RequestAccess::getGuardrailId);
         break;
       case BEDROCK_AGENT_SERVICE:
-        AwsResourceType resourceType = AwsAttributeMap.getRequestType(requestClassName);
+        AwsBedrockResourceTypeMap.AwsBedrockResourceType resourceType =
+            AwsBedrockResourceTypeMap.getRequestType(requestClassName);
         if (resourceType != null) {
           setAttribute(
               attributes,
@@ -86,46 +115,34 @@ class AwsSdkExperimentalAttributesExtractor
     }
   }
 
-  @Override
-  public void onEnd(
-      AttributesBuilder attributes,
-      Context context,
-      Request<?> request,
-      @Nullable Response<?> response,
-      @Nullable Throwable error) {
-    if (response != null) {
-      Object awsResp = response.getAwsResponse();
-      if (awsResp instanceof AmazonWebServiceResponse) {
-        AmazonWebServiceResponse<?> awsWebServiceResponse = (AmazonWebServiceResponse<?>) awsResp;
-        String requestId = awsWebServiceResponse.getRequestId();
-        if (requestId != null) {
-          attributes.put(AWS_REQUEST_ID, requestId);
+  private void bedrockOnEnd(AttributesBuilder attributes, Object awsResp) {
+    switch (serviceName) {
+      case BEDROCK_SERVICE:
+        setAttribute(attributes, AWS_GUARDRAIL_ID, awsResp, RequestAccess::getGuardrailId);
+        break;
+      case BEDROCK_AGENT_SERVICE:
+        String responseClassName = awsResp.getClass().getSimpleName();
+        AwsBedrockResourceTypeMap.AwsBedrockResourceType resourceType =
+            AwsBedrockResourceTypeMap.getResponseType(responseClassName);
+        if (resourceType != null) {
+          setAttribute(
+              attributes, resourceType.getKeyAttribute(), awsResp, resourceType.getGetter());
         }
-      }
-
-      if (awsResp != null) {
-        switch (serviceName) {
-          case BEDROCK_SERVICE:
-            setAttribute(attributes, AWS_GUARDRAIL_ID, awsResp, RequestAccess::getGuardrailId);
-            break;
-          case BEDROCK_AGENT_SERVICE:
-            String responseClassName = awsResp.getClass().getSimpleName();
-            AwsResourceType resourceType = AwsAttributeMap.getReponseType(responseClassName);
-            if (resourceType != null) {
-              setAttribute(
-                  attributes, resourceType.getKeyAttribute(), awsResp, resourceType.getGetter());
-            }
-            break;
-          case BEDROCK_AGENT_RUNTIME_SERVICE:
-            setAttribute(attributes, AWS_AGENT_ID, awsResp, RequestAccess::getAgentId);
-            setAttribute(
-                attributes, AWS_KNOWLEDGEBASE_ID, awsResp, RequestAccess::getKnowledgeBaseId);
-            break;
-          default:
-            break;
-        }
-      }
+        break;
+      case BEDROCK_AGENT_RUNTIME_SERVICE:
+        setAttribute(attributes, AWS_AGENT_ID, awsResp, RequestAccess::getAgentId);
+        setAttribute(attributes, AWS_KNOWLEDGEBASE_ID, awsResp, RequestAccess::getKnowledgeBaseId);
+        break;
+      default:
+        break;
     }
+  }
+
+  private boolean isBedrockService() {
+    return serviceName.equals(BEDROCK_SERVICE)
+        || serviceName.equals(BEDROCK_AGENT_SERVICE)
+        || serviceName.equals(BEDROCK_AGENT_RUNTIME_SERVICE)
+        || serviceName.equals(BEDROCK_RUNTIME_SERVICE);
   }
 
   private static void setAttribute(
