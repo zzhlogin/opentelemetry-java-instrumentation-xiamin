@@ -37,14 +37,12 @@ class AwsSdkExperimentalAttributesExtractor
   private static final String BEDROCK_AGENT_SERVICE = "AWSBedrockAgent";
   private static final String BEDROCK_AGENT_RUNTIME_SERVICE = "AWSBedrockAgentRuntime";
   private static final String BEDROCK_RUNTIME_SERVICE = "AmazonBedrockRuntime";
-  private String serviceName;
 
   @Override
   public void onStart(AttributesBuilder attributes, Context parentContext, Request<?> request) {
     attributes.put(AWS_AGENT, COMPONENT_NAME);
     attributes.put(AWS_ENDPOINT, request.getEndpoint().toString());
 
-    serviceName = request.getServiceName();
     Object originalRequest = request.getOriginalRequest();
     String requestClassName = originalRequest.getClass().getSimpleName();
     setAttribute(attributes, AWS_BUCKET_NAME, originalRequest, RequestAccess::getBucketName);
@@ -52,8 +50,12 @@ class AwsSdkExperimentalAttributesExtractor
     setAttribute(attributes, AWS_QUEUE_NAME, originalRequest, RequestAccess::getQueueName);
     setAttribute(attributes, AWS_STREAM_NAME, originalRequest, RequestAccess::getStreamName);
     setAttribute(attributes, AWS_TABLE_NAME, originalRequest, RequestAccess::getTableName);
-    if (isBedrockService()) {
-      bedrockOnStart(attributes, originalRequest, requestClassName);
+
+    // Get serviceName defined in the AWS Java SDK V1 Request class.
+    String serviceName = request.getServiceName();
+    // Extract request attributes only for Bedrock services.
+    if (isBedrockService(serviceName)) {
+      bedrockOnStart(attributes, originalRequest, requestClassName, serviceName);
     }
   }
 
@@ -73,21 +75,27 @@ class AwsSdkExperimentalAttributesExtractor
           attributes.put(AWS_REQUEST_ID, requestId);
         }
       }
-      if (awsResp != null && isBedrockService()) {
-        bedrockOnEnd(attributes, awsResp);
+      // Get serviceName defined in the AWS Java SDK V1 Request class.
+      String serviceName = request.getServiceName();
+      // Extract response attributes for Bedrock services
+      if (awsResp != null && isBedrockService(serviceName)) {
+        bedrockOnEnd(attributes, awsResp, serviceName);
       }
     }
   }
 
-  private void bedrockOnStart(
-      AttributesBuilder attributes, Object originalRequest, String requestClassName) {
+  private static void bedrockOnStart(
+      AttributesBuilder attributes,
+      Object originalRequest,
+      String requestClassName,
+      String serviceName) {
     switch (serviceName) {
       case BEDROCK_SERVICE:
         setAttribute(attributes, AWS_GUARDRAIL_ID, originalRequest, RequestAccess::getGuardrailId);
         break;
       case BEDROCK_AGENT_SERVICE:
-        AwsBedrockResourceTypeMap.AwsBedrockResourceType resourceType =
-            AwsBedrockResourceTypeMap.getRequestType(requestClassName);
+        AwsBedrockResourceType resourceType =
+            AwsBedrockResourceType.getRequestType(requestClassName);
         if (resourceType != null) {
           setAttribute(
               attributes,
@@ -115,15 +123,16 @@ class AwsSdkExperimentalAttributesExtractor
     }
   }
 
-  private void bedrockOnEnd(AttributesBuilder attributes, Object awsResp) {
+  private static void bedrockOnEnd(
+      AttributesBuilder attributes, Object awsResp, String serviceName) {
     switch (serviceName) {
       case BEDROCK_SERVICE:
         setAttribute(attributes, AWS_GUARDRAIL_ID, awsResp, RequestAccess::getGuardrailId);
         break;
       case BEDROCK_AGENT_SERVICE:
         String responseClassName = awsResp.getClass().getSimpleName();
-        AwsBedrockResourceTypeMap.AwsBedrockResourceType resourceType =
-            AwsBedrockResourceTypeMap.getResponseType(responseClassName);
+        AwsBedrockResourceType resourceType =
+            AwsBedrockResourceType.getResponseType(responseClassName);
         if (resourceType != null) {
           setAttribute(
               attributes, resourceType.getKeyAttribute(), awsResp, resourceType.getGetter());
@@ -138,7 +147,10 @@ class AwsSdkExperimentalAttributesExtractor
     }
   }
 
-  private boolean isBedrockService() {
+  private static boolean isBedrockService(String serviceName) {
+    // Check if the serviceName belongs to Bedrock Services defined in AWS Java SDK V1.
+    // For example <a
+    // href="https://github.com/aws/aws-sdk-java/blob/38031248a696468e19a4670c0c4585637d5e7cc6/aws-java-sdk-bedrock/src/main/java/com/amazonaws/services/bedrock/AmazonBedrock.java#L34">AmazonBedrock</a>
     return serviceName.equals(BEDROCK_SERVICE)
         || serviceName.equals(BEDROCK_AGENT_SERVICE)
         || serviceName.equals(BEDROCK_AGENT_RUNTIME_SERVICE)
