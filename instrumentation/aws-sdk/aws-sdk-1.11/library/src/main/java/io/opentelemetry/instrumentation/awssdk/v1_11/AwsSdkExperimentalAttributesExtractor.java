@@ -101,7 +101,7 @@ class AwsSdkExperimentalAttributesExtractor
               attributes,
               resourceType.getKeyAttribute(),
               originalRequest,
-              resourceType.getGetter());
+              resourceType.getAttributeValueAccessor());
         }
         break;
       case BEDROCK_AGENT_RUNTIME_SERVICE:
@@ -135,7 +135,10 @@ class AwsSdkExperimentalAttributesExtractor
             AwsBedrockResourceType.getResponseType(responseClassName);
         if (resourceType != null) {
           setAttribute(
-              attributes, resourceType.getKeyAttribute(), awsResp, resourceType.getGetter());
+              attributes,
+              resourceType.getKeyAttribute(),
+              awsResp,
+              resourceType.getAttributeValueAccessor());
         }
         break;
       case BEDROCK_AGENT_RUNTIME_SERVICE:

@@ -25,19 +25,20 @@ enum AwsBedrockResourceType {
   private final AttributeKey<String> keyAttribute;
 
   @SuppressWarnings("ImmutableEnumChecker")
-  private final Function<Object, String> getter;
+  private final Function<Object, String> attributeValueAccessor;
 
-  AwsBedrockResourceType(AttributeKey<String> keyAttribute, Function<Object, String> getter) {
+  AwsBedrockResourceType(
+      AttributeKey<String> keyAttribute, Function<Object, String> attributeValueAccessor) {
     this.keyAttribute = keyAttribute;
-    this.getter = getter;
+    this.attributeValueAccessor = attributeValueAccessor;
   }
 
   public AttributeKey<String> getKeyAttribute() {
     return keyAttribute;
   }
 
-  public Function<Object, String> getGetter() {
-    return getter;
+  public Function<Object, String> getAttributeValueAccessor() {
+    return attributeValueAccessor;
   }
 
   public static AwsBedrockResourceType getRequestType(String requestClass) {
