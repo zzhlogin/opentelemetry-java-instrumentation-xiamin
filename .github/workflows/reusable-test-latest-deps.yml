@@ -12,10 +12,6 @@ on:
     secrets:
       GRADLE_ENTERPRISE_ACCESS_KEY:
         required: false
-      GE_CACHE_USERNAME:
-        required: false
-      GE_CACHE_PASSWORD:
-        required: false
 
 jobs:
   test-latest-deps:
@@ -55,8 +51,6 @@ jobs:
       - name: List tests
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GE_CACHE_USERNAME: ${{ secrets.GE_CACHE_USERNAME }}
-          GE_CACHE_PASSWORD: ${{ secrets.GE_CACHE_PASSWORD }}
         uses: gradle/gradle-build-action@v3
         with:
           arguments: >
@@ -74,8 +68,6 @@ jobs:
         uses: gradle/gradle-build-action@v3
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GE_CACHE_USERNAME: ${{ secrets.GE_CACHE_USERNAME }}
-          GE_CACHE_PASSWORD: ${{ secrets.GE_CACHE_PASSWORD }}
         with:
           arguments: >
             ${{ env.test-tasks }}
@@ -84,3 +76,28 @@ jobs:
           cache-read-only: ${{ inputs.cache-read-only }}
           # gradle enterprise is used for the build cache
           gradle-home-cache-excludes: caches/build-cache-1
+
+      - name: Build scan
+        if: ${{ !cancelled() && hashFiles('build-scan.txt') != '' }}
+        run: cat build-scan.txt
+
+      - name: Upload deadlock detector artifacts if any
+        if: failure()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: deadlock-detector-test-latest-${{ matrix.test-java-version }}-${{ matrix.vm }}-${{ matrix.test-partition }}
+          path: /tmp/deadlock-detector-*
+          if-no-files-found: ignore
+
+      - name: Upload jvm crash dump files if any
+        if: failure()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: javacore-test-latest-${{ matrix.test-java-version }}-${{ matrix.test-partition }}
+          path: |
+            **/hs_err_pid*.log
+            **/javacore.*.txt
+            **/Snap.*.trc
+            **/core.*.dmp
+            **/jitdump.*.dmp
+          if-no-files-found: ignore
