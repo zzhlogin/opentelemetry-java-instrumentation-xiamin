@@ -7,9 +7,11 @@ package io.opentelemetry.instrumentation.awssdk.v2_2
 
 
 import io.opentelemetry.semconv.SemanticAttributes
+import io.opentelemetry.testing.internal.armeria.common.HttpData
 import io.opentelemetry.testing.internal.armeria.common.HttpResponse
 import io.opentelemetry.testing.internal.armeria.common.HttpStatus
 import io.opentelemetry.testing.internal.armeria.common.MediaType
+import io.opentelemetry.testing.internal.armeria.common.ResponseHeaders
 import org.junit.jupiter.api.Assumptions
 import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -33,8 +35,19 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.CreateQueueRequest
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
+import software.amazon.awssdk.services.sfn.SfnClient
+import software.amazon.awssdk.services.sfn.model.DescribeStateMachineRequest
+import software.amazon.awssdk.services.sfn.model.DescribeActivityRequest
+import software.amazon.awssdk.services.lambda.LambdaClient
+import software.amazon.awssdk.services.lambda.model.GetFunctionRequest
+import software.amazon.awssdk.services.lambda.model.GetEventSourceMappingRequest
+import software.amazon.awssdk.services.sns.SnsClient
+import software.amazon.awssdk.services.sns.model.PublishRequest
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient
+import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest
 import spock.lang.Unroll
 
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.concurrent.Future
 
@@ -59,6 +72,22 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
   // bucket name as label.
   def clientUri = URI.create("http://localhost:${server.httpPort()}")
 
+  def s3ClientBuilder() {
+    def builder = S3Client.builder()
+    if (Boolean.getBoolean("testLatestDeps")) {
+      builder.forcePathStyle(true)
+    }
+    return builder
+  }
+
+  def s3AsyncClientBuilder() {
+    def builder = S3AsyncClient.builder()
+    if (Boolean.getBoolean("testLatestDeps")) {
+      builder.forcePathStyle(true)
+    }
+    return builder
+  }
+
   def "send #operation request with builder #builder.class.getName() mocked response"() {
     assumeSupportedConfig(service, operation)
 
@@ -69,9 +98,14 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
       .region(Region.AP_NORTHEAST_1)
       .credentialsProvider(CREDENTIALS_PROVIDER)
       .build()
-    server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
-    def response = call.call(client)
 
+    if (body instanceof Closure) {
+      server.enqueue(body.call())
+    } else {
+      server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
+    }
+
+    def response = call.call(client)
     if (response instanceof Future) {
       response = response.get()
     }
@@ -120,7 +154,31 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               "$SemanticAttributes.MESSAGING_SYSTEM" "AmazonSQS"
             } else if (service == "Kinesis") {
               "aws.stream.name" "somestream"
+            } else if (service == "Bedrock" && operation == "GetGuardrail") {
+              "aws.bedrock.guardrail.id" "guardrailId"
+            } else if (service == "BedrockAgent" && operation == "GetAgent") {
+              "aws.bedrock.agent.id" "agentId"
+            } else if (service == "BedrockAgent" && operation == "GetKnowledgeBase") {
+              "aws.bedrock.knowledge_base.id" "knowledgeBaseId"
+            } else if (service == "BedrockAgent" && operation == "GetDataSource") {
+              "aws.bedrock.data_source.id" "datasourceId"
+            } else if (service == "BedrockRuntime" && operation == "InvokeModel") {
+              "gen_ai.request.model" "meta.llama2-13b-chat-v1"
+              "gen_ai.system" "aws_bedrock"
+            } else if (service == "Sfn" && operation == "DescribeStateMachine") {
+              "aws.stepfunctions.state_machine.arn" "stateMachineArn"
+            } else if (service == "Sfn" && operation == "DescribeActivity") {
+              "aws.stepfunctions.activity.arn" "activityArn"
+            } else if (service == "Lambda" && operation == "GetFunction") {
+              "aws.lambda.function.name" "functionName"
+            } else if (service == "Lambda" && operation == "GetEventSourceMapping") {
+              "aws.lambda.resource_mapping.id" "sourceEventId"
+            } else if (service == "Sns") {
+              "aws.sns.topic.arn" "topicArn"
+            } else if (service == "SecretsManager") {
+              "aws.secretsmanager.secret.arn" "someSecretArn"
             }
+
           }
         }
       }
@@ -131,25 +189,57 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
 
     where:
     service   | operation           | method | requestId                              | builder                 | call                                                                                             | body
-    "S3"      | "CreateBucket"      | "PUT"  | "UNKNOWN"                              | S3Client.builder()      | { c -> c.createBucket(CreateBucketRequest.builder().bucket("somebucket").build()) }              | ""
-    "S3"      | "GetObject"         | "GET"  | "UNKNOWN"                              | S3Client.builder()      | { c -> c.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build()) }     | ""
+    "S3"      | "CreateBucket"      | "PUT"  | "UNKNOWN"                              | s3ClientBuilder()       | { c -> c.createBucket(CreateBucketRequest.builder().bucket("somebucket").build()) }              | ""
+    "S3"      | "GetObject"         | "GET"  | "UNKNOWN"                              | s3ClientBuilder()       | { c -> c.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build()) }     | ""
     "Kinesis" | "DeleteStream"      | "POST" | "UNKNOWN"                              | KinesisClient.builder() | { c -> c.deleteStream(DeleteStreamRequest.builder().streamName("somestream").build()) }          | ""
-    "Sqs"     | "CreateQueue"       | "POST" | "7a62c49f-347e-4fc4-9331-6e8e7a96aa73" | SqsClient.builder()     | { c -> c.createQueue(CreateQueueRequest.builder().queueName("somequeue").build()) }              | """
-        <CreateQueueResponse>
-            <CreateQueueResult><QueueUrl>https://queue.amazonaws.com/123456789012/MyQueue</QueueUrl></CreateQueueResult>
-            <ResponseMetadata><RequestId>7a62c49f-347e-4fc4-9331-6e8e7a96aa73</RequestId></ResponseMetadata>
-        </CreateQueueResponse>
-        """
-    "Sqs"     | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsClient.builder()     | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) } | """
-        <SendMessageResponse>
-            <SendMessageResult>
-                <MD5OfMessageBody>d41d8cd98f00b204e9800998ecf8427e</MD5OfMessageBody>
-                <MD5OfMessageAttributes>3ae8f24a165a8cedc005670c81a27295</MD5OfMessageAttributes>
-                <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
-            </SendMessageResult>
-            <ResponseMetadata><RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId></ResponseMetadata>
-        </SendMessageResponse>
-        """
+    "Sqs"     | "CreateQueue"       | "POST" | "7a62c49f-347e-4fc4-9331-6e8e7a96aa73" | SqsClient.builder()     | { c -> c.createQueue(CreateQueueRequest.builder().queueName("somequeue").build()) }              | {
+      if (!Boolean.getBoolean("testLatestDeps")) {
+        def content = """
+            <CreateQueueResponse>
+                <CreateQueueResult><QueueUrl>https://queue.amazonaws.com/123456789012/MyQueue</QueueUrl></CreateQueueResult>
+                <ResponseMetadata><RequestId>7a62c49f-347e-4fc4-9331-6e8e7a96aa73</RequestId></ResponseMetadata>
+            </CreateQueueResponse>
+            """
+        return HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, content)
+      }
+      def content = """
+          {
+            "QueueUrl":"https://queue.amazonaws.com/123456789012/MyQueue"
+          }
+          """
+      ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
+        .contentType(MediaType.PLAIN_TEXT_UTF_8)
+        .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
+        .build()
+      return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
+    }
+    "Sqs"     | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsClient.builder()     | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) } | {
+      if (!Boolean.getBoolean("testLatestDeps")) {
+        def content = """
+          <SendMessageResponse>
+              <SendMessageResult>
+                  <MD5OfMessageBody>d41d8cd98f00b204e9800998ecf8427e</MD5OfMessageBody>
+                  <MD5OfMessageAttributes>3ae8f24a165a8cedc005670c81a27295</MD5OfMessageAttributes>
+                  <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
+              </SendMessageResult>
+              <ResponseMetadata><RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId></ResponseMetadata>
+          </SendMessageResponse>
+          """
+        return HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, content)
+      }
+      def content = """
+          {
+            "MD5OfMessageBody":"d41d8cd98f00b204e9800998ecf8427e",
+            "MD5OfMessageAttributes":"3ae8f24a165a8cedc005670c81a27295",
+            "MessageId":"5fea7756-0ea4-451a-a703-a558b933e274"
+          }
+          """
+      ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
+        .contentType(MediaType.PLAIN_TEXT_UTF_8)
+        .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
+        .build()
+      return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
+    }
     "Ec2"     | "AllocateAddress"   | "POST" | "59dbff89-35bd-4eac-99ed-be587EXAMPLE" | Ec2Client.builder()     | { c -> c.allocateAddress() }                                                                     | """
         <AllocateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
            <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
@@ -162,6 +252,41 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
           <ResponseMetadata><RequestId>0ac9cda2-bbf4-11d3-f92b-31fa5e8dbc99</RequestId></ResponseMetadata>
         </DeleteOptionGroupResponse>
         """
+    "Sfn" | "DescribeStateMachine" | "POST" | "UNKNOWN" | SfnClient.builder()
+    | { c -> c.describeStateMachine(DescribeStateMachineRequest.builder().stateMachineArn("stateMachineArn").build()) }
+    | ""
+    "Sfn" | "DescribeActivity" | "POST" | "UNKNOWN" | SfnClient.builder()
+    | { c -> c.describeActivity(DescribeActivityRequest.builder().activityArn("activityArn").build()) }
+    | ""
+    "Lambda" | "GetFunction" | "GET" | "UNKNOWN" | LambdaClient.builder()
+    | { c -> c.getFunction(GetFunctionRequest.builder().functionName("functionName").build()) }
+    | ""
+    "Lambda" | "GetEventSourceMapping" | "GET" |"UNKNOWN" | LambdaClient.builder()
+    | { c -> c.getEventSourceMapping(GetEventSourceMappingRequest.builder().uuid("sourceEventId").build()) }
+    | ""
+    "Sns" | "Publish" | "POST" | "d74b8436-ae13-5ab4-a9ff-ce54dfea72a0" | SnsClient.builder()
+    | { c -> c.publish(PublishRequest.builder().topicArn("topicArn").message("message").build()) }
+    | """
+      <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+          <PublishResult>
+              <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+          </PublishResult>
+          <ResponseMetadata>
+              <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+          </ResponseMetadata>
+      </PublishResponse>
+    """
+    "SecretsManager" | "GetSecretValue" | "POST" | "UNKNOWN" | SecretsManagerClient.builder()
+    | { c -> c.getSecretValue(GetSecretValueRequest.builder().secretId("someSecret1").build()) }
+    | """
+      {
+        "ARN":"someSecretArn",
+        "CreatedDate":1.523477145713E9,
+        "Name":"MyTestDatabaseSecret",
+        "SecretString":"{\\n  \\"username\\":\\"david\\",\\n  \\"password\\":\\"EXAMPLE-PASSWORD\\"\\n}\\n",
+        "VersionId":"EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
+      }
+    """
   }
 
   def "send #operation async request with builder #builder.class.getName() mocked response"() {
@@ -173,9 +298,14 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
       .region(Region.AP_NORTHEAST_1)
       .credentialsProvider(CREDENTIALS_PROVIDER)
       .build()
-    server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
-    def response = call.call(client)
 
+    if (body instanceof Closure) {
+      server.enqueue(body.call())
+    } else {
+      server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body))
+    }
+
+    def response = call.call(client)
     if (response instanceof Future) {
       response = response.get()
     }
@@ -199,7 +329,7 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
               "$SemanticAttributes.HTTP_URL" { it.startsWith("http://somebucket.localhost:${server.httpPort()}") || it.startsWith("http://localhost:${server.httpPort()}") }
             } else {
               "$SemanticAttributes.NET_PEER_NAME" "localhost"
-              "$SemanticAttributes.HTTP_URL" "http://localhost:${server.httpPort()}"
+              "$SemanticAttributes.HTTP_URL" { it == "http://localhost:${server.httpPort()}" || it == "http://localhost:${server.httpPort()}/" }
             }
             "$SemanticAttributes.NET_PEER_PORT" server.httpPort()
             "$SemanticAttributes.HTTP_METHOD" "$method"
@@ -245,26 +375,58 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
 
     where:
     service | operation           | method | requestId                              | builder                  | call                                                                                                                             | body
-    "S3"    | "CreateBucket"      | "PUT"  | "UNKNOWN"                              | S3AsyncClient.builder()  | { c -> c.createBucket(CreateBucketRequest.builder().bucket("somebucket").build()) }                                              | ""
-    "S3"    | "GetObject"         | "GET"  | "UNKNOWN"                              | S3AsyncClient.builder()  | { c -> c.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build(), AsyncResponseTransformer.toBytes()) } | "1234567890"
+    "S3"    | "CreateBucket"      | "PUT"  | "UNKNOWN"                              | s3AsyncClientBuilder()   | { c -> c.createBucket(CreateBucketRequest.builder().bucket("somebucket").build()) }                                              | ""
+    "S3"    | "GetObject"         | "GET"  | "UNKNOWN"                              | s3AsyncClientBuilder()   | { c -> c.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build(), AsyncResponseTransformer.toBytes()) } | "1234567890"
     // Kinesis seems to expect an http2 response which is incompatible with our test server.
     // "Kinesis"  | "DeleteStream"      | "POST" | "/"                   | "UNKNOWN"                              | KinesisAsyncClient.builder()  | { c -> c.deleteStream(DeleteStreamRequest.builder().streamName("somestream").build()) }                                          | ""
-    "Sqs"   | "CreateQueue"       | "POST" | "7a62c49f-347e-4fc4-9331-6e8e7a96aa73" | SqsAsyncClient.builder() | { c -> c.createQueue(CreateQueueRequest.builder().queueName("somequeue").build()) }                                              | """
-        <CreateQueueResponse>
-            <CreateQueueResult><QueueUrl>https://queue.amazonaws.com/123456789012/MyQueue</QueueUrl></CreateQueueResult>
-            <ResponseMetadata><RequestId>7a62c49f-347e-4fc4-9331-6e8e7a96aa73</RequestId></ResponseMetadata>
-        </CreateQueueResponse>
-        """
-    "Sqs"   | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsAsyncClient.builder() | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) }                                 | """
-        <SendMessageResponse>
-            <SendMessageResult>
-                <MD5OfMessageBody>d41d8cd98f00b204e9800998ecf8427e</MD5OfMessageBody>
-                <MD5OfMessageAttributes>3ae8f24a165a8cedc005670c81a27295</MD5OfMessageAttributes>
-                <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
-            </SendMessageResult>
-            <ResponseMetadata><RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId></ResponseMetadata>
-        </SendMessageResponse>
-        """
+    "Sqs"   | "CreateQueue"       | "POST" | "7a62c49f-347e-4fc4-9331-6e8e7a96aa73" | SqsAsyncClient.builder() | { c -> c.createQueue(CreateQueueRequest.builder().queueName("somequeue").build()) }                                              | {
+      if (!Boolean.getBoolean("testLatestDeps")) {
+        def content = """
+            <CreateQueueResponse>
+                <CreateQueueResult><QueueUrl>https://queue.amazonaws.com/123456789012/MyQueue</QueueUrl></CreateQueueResult>
+                <ResponseMetadata><RequestId>7a62c49f-347e-4fc4-9331-6e8e7a96aa73</RequestId></ResponseMetadata>
+            </CreateQueueResponse>
+            """
+        return HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, content)
+      }
+      def content = """
+          {
+            "QueueUrl":"https://queue.amazonaws.com/123456789012/MyQueue"
+          }
+          """
+      ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
+        .contentType(MediaType.PLAIN_TEXT_UTF_8)
+        .add("x-amzn-RequestId", "7a62c49f-347e-4fc4-9331-6e8e7a96aa73")
+        .build()
+      return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
+    }
+    "Sqs"   | "SendMessage"       | "POST" | "27daac76-34dd-47df-bd01-1f6e873584a0" | SqsAsyncClient.builder() | { c -> c.sendMessage(SendMessageRequest.builder().queueUrl(QUEUE_URL).messageBody("").build()) }                                 | {
+      if (!Boolean.getBoolean("testLatestDeps")) {
+        def content = """
+          <SendMessageResponse>
+              <SendMessageResult>
+                  <MD5OfMessageBody>d41d8cd98f00b204e9800998ecf8427e</MD5OfMessageBody>
+                  <MD5OfMessageAttributes>3ae8f24a165a8cedc005670c81a27295</MD5OfMessageAttributes>
+                  <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
+              </SendMessageResult>
+              <ResponseMetadata><RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId></ResponseMetadata>
+          </SendMessageResponse>
+          """
+        return HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, content)
+      }
+      def content = """
+          {
+            "MD5OfMessageBody":"d41d8cd98f00b204e9800998ecf8427e",
+            "MD5OfMessageAttributes":"3ae8f24a165a8cedc005670c81a27295",
+            "MessageId":"5fea7756-0ea4-451a-a703-a558b933e274"
+          }
+          """
+      ResponseHeaders headers = ResponseHeaders.builder(HttpStatus.OK)
+        .contentType(MediaType.PLAIN_TEXT_UTF_8)
+        .add("x-amzn-RequestId", "27daac76-34dd-47df-bd01-1f6e873584a0")
+        .build()
+      return HttpResponse.of(headers, HttpData.of(StandardCharsets.UTF_8, content))
+    }
     "Ec2"   | "AllocateAddress"   | "POST" | "59dbff89-35bd-4eac-99ed-be587EXAMPLE" | Ec2AsyncClient.builder() | { c -> c.allocateAddress() }                                                                                                     | """
         <AllocateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2016-11-15/">
            <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
@@ -297,7 +459,7 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
     // One retry so two requests.
     server.enqueue(HttpResponse.delayed(HttpResponse.of(HttpStatus.OK), Duration.ofMillis(5000)))
     server.enqueue(HttpResponse.delayed(HttpResponse.of(HttpStatus.OK), Duration.ofMillis(5000)))
-    def client = S3Client.builder()
+    def builder = S3Client.builder()
       .overrideConfiguration(createOverrideConfigurationBuilder()
         .retryPolicy(RetryPolicy.builder().numRetries(1).build())
         .build())
@@ -305,7 +467,12 @@ abstract class AbstractAws2ClientTest extends AbstractAws2ClientCoreTest {
       .region(Region.AP_NORTHEAST_1)
       .credentialsProvider(CREDENTIALS_PROVIDER)
       .httpClientBuilder(ApacheHttpClient.builder().socketTimeout(Duration.ofMillis(50)))
-      .build()
+
+    if (Boolean.getBoolean("testLatestDeps")) {
+      builder.forcePathStyle(true)
+    }
+
+    def client = builder.build()
 
     when:
     client.getObject(GetObjectRequest.builder().bucket("somebucket").key("somekey").build())
