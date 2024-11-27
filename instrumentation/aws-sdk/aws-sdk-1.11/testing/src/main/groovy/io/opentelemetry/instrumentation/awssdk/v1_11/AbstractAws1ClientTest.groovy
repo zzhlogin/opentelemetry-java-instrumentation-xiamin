@@ -27,6 +27,24 @@ import com.amazonaws.services.rds.AmazonRDSClientBuilder
 import com.amazonaws.services.rds.model.DeleteOptionGroupRequest
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.bedrockagent.AWSBedrockAgentClientBuilder
+import com.amazonaws.services.bedrockagent.model.GetAgentRequest
+import com.amazonaws.services.bedrockagent.model.GetKnowledgeBaseRequest
+import com.amazonaws.services.bedrockagent.model.GetDataSourceRequest
+import com.amazonaws.services.bedrock.AmazonBedrockClientBuilder
+import com.amazonaws.services.bedrock.model.GetGuardrailRequest
+import com.amazonaws.services.bedrockruntime.AmazonBedrockRuntimeClientBuilder
+import com.amazonaws.services.bedrockruntime.model.InvokeModelRequest
+import com.amazonaws.services.stepfunctions.AWSStepFunctionsClientBuilder
+import com.amazonaws.services.stepfunctions.model.DescribeStateMachineRequest
+import com.amazonaws.services.stepfunctions.model.DescribeActivityRequest
+import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import com.amazonaws.services.sns.model.PublishRequest
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder
+import com.amazonaws.services.secretsmanager.model.CreateSecretRequest
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder
+import com.amazonaws.services.lambda.model.GetEventSourceMappingRequest
+import com.amazonaws.services.lambda.model.GetFunctionRequest
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.instrumentation.test.InstrumentationSpecification
 import io.opentelemetry.semconv.SemanticAttributes
@@ -38,6 +56,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 
 import java.time.Duration
+import java.nio.charset.StandardCharsets
 
 import static io.opentelemetry.api.trace.SpanKind.CLIENT
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER
@@ -156,6 +175,296 @@ abstract class AbstractAws1ClientTest extends InstrumentationSpecification {
           </ResponseMetadata>
         </DeleteOptionGroupResponse>
       """
+    "Bedrock"    | "GetGuardrail"      | "GET" | "/"                   |
+      AmazonBedrockClientBuilder.standard()                             | { c -> c.getGuardrail(new GetGuardrailRequest().withGuardrailIdentifier("guardrailId")) } | ["aws.bedrock.guardrail.id":"guardrailId", "aws.bedrock.guardrail.arn": "guardrailArn"] | """
+        {
+           "blockedInputMessaging": "string",
+           "blockedOutputsMessaging": "string",
+           "contentPolicy": {},
+           "createdAt": "2024-06-12T18:31:45Z",
+           "description": "string",
+           "guardrailArn": "guardrailArn",
+           "guardrailId": "guardrailId",
+           "kmsKeyArn": "string",
+           "name": "string",
+           "sensitiveInformationPolicy": {},
+           "status": "READY",
+           "topicPolicy": {
+              "topics": [
+                 {
+                    "definition": "string",
+                    "examples": [ "string" ],
+                    "name": "string",
+                    "type": "string"
+                 }
+              ]
+           },
+           "updatedAt": "2024-06-12T18:31:48Z",
+           "version": "DRAFT",
+           "wordPolicy": {}
+        }
+      """
+    "AWSBedrockAgent"    | "GetAgent"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getAgent(new GetAgentRequest().withAgentId("agentId")) } | ["aws.bedrock.agent.id": "agentId"] | ""
+    "AWSBedrockAgent"    | "GetKnowledgeBase"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getKnowledgeBase(new GetKnowledgeBaseRequest().withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.knowledge_base.id": "knowledgeBaseId"] | ""
+    "AWSBedrockAgent"    | "GetDataSource"      | "GET" | "/"                   | AWSBedrockAgentClientBuilder.standard()                             | { c -> c.getDataSource(new GetDataSourceRequest().withDataSourceId("datasourceId").withKnowledgeBaseId("knowledgeBaseId")) } | ["aws.bedrock.data_source.id": "datasourceId"] | ""
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("ai21.jamba-1-5-mini-v1:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+            {
+              "messages": [{
+                "role": "user",
+                "message": "Which LLM are you?"
+              }],
+              "max_tokens": 1000,
+              "top_p": 0.8,
+              "temperature": 0.7
+            }
+          '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "ai21.jamba-1-5-mini-v1:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "1000",
+        "gen_ai.request.temperature": "0.7",
+        "gen_ai.request.top_p": "0.8",
+        "gen_ai.response.finish_reasons": "[stop]",
+        "gen_ai.usage.input_tokens": "5",
+        "gen_ai.usage.output_tokens": "42"
+      ] |
+      '''
+    {
+      "choices": [{
+        "finish_reason": "stop"
+      }],
+      "usage": {
+        "prompt_tokens": 5,
+        "completion_tokens": 42
+      }
+    }
+    '''
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("amazon.titan-text-premier-v1:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+            {
+              "inputText": "Hello, world!",
+              "textGenerationConfig": {
+                "temperature": 0.7,
+                "topP": 0.9,
+                "maxTokenCount": 100,
+                "stopSequences": ["END"]
+              }
+            }
+          '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "amazon.titan-text-premier-v1:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "100",
+        "gen_ai.request.temperature": "0.7",
+        "gen_ai.request.top_p": "0.9",
+        "gen_ai.response.finish_reasons": "[stop]",
+        "gen_ai.usage.input_tokens": "5",
+        "gen_ai.usage.output_tokens": "42"
+      ] |
+      '''
+    {
+      "inputTextTokenCount": 5,
+      "results": [
+        {
+          "tokenCount": 42,
+          "outputText": "Hi! I'm Titan, an AI assistant. How can I help you today?",
+          "completionReason": "stop"
+        }
+      ]
+    }
+    '''
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("anthropic.claude-3-5-sonnet-20241022-v2:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+            {
+              "anthropic_version": "bedrock-2023-05-31",
+              "messages": [{
+                "role": "user",
+                "content": "Hello, world"
+              }],
+              "max_tokens": 100,
+              "temperature": 0.7,
+              "top_p": 0.9
+            }
+          '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "100",
+        "gen_ai.request.temperature": "0.7",
+        "gen_ai.request.top_p": "0.9",
+        "gen_ai.response.finish_reasons": "[end_turn]",
+        "gen_ai.usage.input_tokens": "2095",
+        "gen_ai.usage.output_tokens": "503"
+      ] |
+      '''
+    {
+      "stop_reason": "end_turn",
+      "usage": {
+        "input_tokens": 2095,
+        "output_tokens": 503
+      }
+    }
+    '''
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("meta.llama3-70b-instruct-v1:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+            {
+              "prompt": "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\\\\nDescribe the purpose of a 'hello world' program in one line. <|eot_id|>\\\\n<|start_header_id|>assistant<|end_header_id|>\\\\n",
+              "max_gen_len": 128,
+              "temperature": 0.1,
+              "top_p": 0.9
+            }
+          '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "meta.llama3-70b-instruct-v1:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "128",
+        "gen_ai.request.temperature": "0.1",
+        "gen_ai.request.top_p": "0.9",
+        "gen_ai.response.finish_reasons": "[stop]",
+        "gen_ai.usage.input_tokens": "2095",
+        "gen_ai.usage.output_tokens": "503"
+      ] |
+      '''
+    {
+      "prompt_token_count": 2095,
+      "generation_token_count": 503,
+      "stop_reason": "stop"
+    }
+    '''
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("cohere.command-r-v1:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+            {
+              "message": "Convince me to write a LISP interpreter in one line.",
+              "temperature": 0.8,
+              "max_tokens": 4096,
+              "p": 0.45 
+            }
+          '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "cohere.command-r-v1:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "4096",
+        "gen_ai.request.temperature": "0.8",
+        "gen_ai.request.top_p": "0.45",
+        "gen_ai.response.finish_reasons": "[COMPLETE]",
+        "gen_ai.usage.input_tokens": "9",
+        "gen_ai.usage.output_tokens": "2"
+      ] |
+      '''
+    {
+      "text": "test-output",
+      "finish_reason": "COMPLETE"
+    }
+    '''
+    "BedrockRuntime" | "InvokeModel" | "POST" | "/" |
+      AmazonBedrockRuntimeClientBuilder.standard() |
+      { c ->
+        c.invokeModel(
+          new InvokeModelRequest()
+            .withModelId("mistral.mistral-large-2402-v1:0")
+            .withBody(StandardCharsets.UTF_8.encode('''
+        {
+            "prompt": "<s>[INST] Describe the difference between a compiler and interpreter in one line. [/INST]\\\\n",
+            "max_tokens": 4096,
+            "temperature": 0.75,
+            "top_p": 0.25
+        }
+    '''))
+        )
+      } |
+      [
+        "gen_ai.request.model": "mistral.mistral-large-2402-v1:0",
+        "gen_ai.system": "aws_bedrock",
+        "gen_ai.request.max_tokens": "4096",
+        "gen_ai.request.temperature": "0.75",
+        "gen_ai.request.top_p": "0.25",
+        "gen_ai.response.finish_reasons": "[stop]",
+        "gen_ai.usage.input_tokens": "16",
+        "gen_ai.usage.output_tokens": "2"
+      ] |
+      '''
+        {
+          "outputs": [{
+            "text": "test-output",
+            "stop_reason": "stop"
+          }]
+        }
+    '''
+    "AWSStepFunctions" | "DescribeStateMachine" | "POST" | "/" | AWSStepFunctionsClientBuilder.standard()
+      | { c -> c.describeStateMachine(new DescribeStateMachineRequest().withStateMachineArn("stateMachineArn")) }
+      | ["aws.stepfunctions.state_machine.arn": "stateMachineArn"]
+      | ""
+    "AWSStepFunctions" | "DescribeActivity" | "POST" | "/" | AWSStepFunctionsClientBuilder.standard()
+      | { c -> c.describeActivity(new DescribeActivityRequest().withActivityArn("activityArn")) }
+      | ["aws.stepfunctions.activity.arn": "activityArn"]
+      | ""
+    "SNS" | "Publish" | "POST" | "/" | AmazonSNSClientBuilder.standard()
+      | { c -> c.publish(new PublishRequest().withMessage("message").withTopicArn("topicArn")) }
+      | ["aws.sns.topic.arn": "topicArn"]
+      | """
+      <PublishResponse xmlns="https://sns.amazonaws.com/doc/2010-03-31/">
+          <PublishResult>
+              <MessageId>567910cd-659e-55d4-8ccb-5aaf14679dc0</MessageId>
+          </PublishResult>
+          <ResponseMetadata>
+              <RequestId>d74b8436-ae13-5ab4-a9ff-ce54dfea72a0</RequestId>
+          </ResponseMetadata>
+      </PublishResponse>
+      """
+    "AWSSecretsManager" | "CreateSecret" | "POST" | "/" | AWSSecretsManagerClientBuilder.standard()
+      | { c -> c.createSecret(new CreateSecretRequest().withName("secretName").withSecretString("secretValue")) }
+      | ["aws.secretsmanager.secret.arn": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3"]
+      | """
+      {
+        "ARN": "arn:aws:secretsmanager:us-west-2:123456789012:secret:MyTestDatabaseSecret-a1b2c3",
+        "Name":"MyTestDatabaseSecret",
+        "VersionId": "EXAMPLE1-90ab-cdef-fedc-ba987SECRET1"
+      }
+    """
+    "AWSLambda" | "GetEventSourceMapping" | "GET" | "/" | AWSLambdaClientBuilder.standard()
+      | { c -> c.getEventSourceMapping(new GetEventSourceMappingRequest().withUUID("uuid")) }
+      | ["aws.lambda.resource_mapping.id": "uuid"]
+      | ""
+    "AWSLambda" | "GetFunction" | "GET" | "/" | AWSLambdaClientBuilder.standard()
+      | { c-> c.getFunction(new GetFunctionRequest().withFunctionName("functionName")) }
+      | ["aws.lambda.function.name": "functionName"]
+      | ""
   }
 
   def "send #operation request to closed port"() {
