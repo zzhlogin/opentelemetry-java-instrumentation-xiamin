@@ -8,15 +8,16 @@ package io.opentelemetry.instrumentation.awssdk.v1_11;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.CreateSecretRequest;
+import com.google.common.collect.ImmutableMap;
 import io.opentelemetry.testing.internal.armeria.common.HttpResponse;
 import io.opentelemetry.testing.internal.armeria.common.HttpStatus;
 import io.opentelemetry.testing.internal.armeria.common.MediaType;
-import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 
 public abstract class AbstractSecretsManagerClientTest extends AbstractBaseAwsClientTest {
 
-  public abstract AWSSecretsManagerClientBuilder configureClient(AWSSecretsManagerClientBuilder client);
+  public abstract AWSSecretsManagerClientBuilder configureClient(
+      AWSSecretsManagerClientBuilder client);
 
   @Override
   protected boolean hasRequestId() {
@@ -40,10 +41,9 @@ public abstract class AbstractSecretsManagerClientTest extends AbstractBaseAwsCl
             + "}";
     server.enqueue(HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, body));
 
-    Object response = client.createSecret(
-        new CreateSecretRequest()
-            .withName("secretName")
-            .withSecretString("secretValue"));
+    Object response =
+        client.createSecret(
+            new CreateSecretRequest().withName("secretName").withSecretString("secretValue"));
 
     assertRequestWithMockedResponse(
         response,

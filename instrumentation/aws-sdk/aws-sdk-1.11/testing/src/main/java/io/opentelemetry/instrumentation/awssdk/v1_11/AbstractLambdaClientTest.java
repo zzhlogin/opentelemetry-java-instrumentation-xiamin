@@ -32,8 +32,8 @@ public abstract class AbstractLambdaClientTest extends AbstractBaseAwsClientTest
   @ParameterizedTest
   @MethodSource("provideArguments")
   public void testSendRequestWithMockedResponse(
-      String operation, Map<String, String> additionalAttributes,
-      Function<AWSLambda, Object> call) throws Exception {
+      String operation, Map<String, String> additionalAttributes, Function<AWSLambda, Object> call)
+      throws Exception {
 
     AWSLambdaClientBuilder clientBuilder = AWSLambdaClientBuilder.standard();
 
@@ -56,14 +56,11 @@ public abstract class AbstractLambdaClientTest extends AbstractBaseAwsClientTest
             "GetEventSourceMapping",
             ImmutableMap.of("aws.lambda.resource_mapping.id", "uuid"),
             (Function<AWSLambda, Object>)
-                c -> c.getEventSourceMapping(
-                    new GetEventSourceMappingRequest().withUUID("uuid"))),
-
+                c -> c.getEventSourceMapping(new GetEventSourceMappingRequest().withUUID("uuid"))),
         Arguments.of(
             "GetFunction",
             ImmutableMap.of("aws.lambda.function.name", "functionName"),
             (Function<AWSLambda, Object>)
-                c -> c.getFunction(
-                    new GetFunctionRequest().withFunctionName("functionName"))));
+                c -> c.getFunction(new GetFunctionRequest().withFunctionName("functionName"))));
   }
 }
